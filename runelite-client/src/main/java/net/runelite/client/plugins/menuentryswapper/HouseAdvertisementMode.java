@@ -35,11 +35,11 @@ public enum HouseAdvertisementMode
 	ADD_HOUSE("Add-House"),
 	VISIT_LAST("Visit-Last");
 
-	private final String name;
+	private final String option;
 
 	@Override
 	public String toString()
 	{
-		return name;
+		return option;
 	}
 }

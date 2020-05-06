@@ -577,32 +577,13 @@ public class MenuEntrySwapperPlugin extends Plugin
 		{
 			swap("harpoon", option, target, index);
 		}
-		else if (config.swapHomePortal() != HouseMode.ENTER && option.equals("enter") && target.equals("portal"))
+		else if (config.swapHomePortal() != null && config.swapHomePortal() != HouseMode.ENTER && option.equals("enter") && target.equals("portal"))
 		{
-			switch (config.swapHomePortal())
-			{
-				case HOME:
-					swap("home", option, target, index);
-					break;
-				case BUILD_MODE:
-					swap("build mode", option, target, index);
-					break;
-				case FRIENDS_HOUSE:
-					swap("friend's house", option, target, index);
-					break;
-			}
+			swap(config.swapHomePortal().getOption(), option, target, index);
 		}
-		else if (config.swapHouseAdvertisement() != HouseAdvertisementMode.VIEW && option.equals("view"))
+		else if (config.swapHouseAdvertisement() != null && config.swapHouseAdvertisement() != HouseAdvertisementMode.VIEW && option.equals("view"))
 		{
-			switch (config.swapHouseAdvertisement())
-			{
-				case ADD_HOUSE:
-					swap("add-house", option, target, index);
-					break;
-				case VISIT_LAST:
-					swap("visit-last", option, target, index);
-					break;
-			}
+			swap(config.swapHouseAdvertisement().getOption(), option, target, index);
 		}
 		else if (config.swapFairyRing() != FairyRingMode.OFF && config.swapFairyRing() != FairyRingMode.ZANARIS
 			&& (option.equals("zanaris") || option.equals("configure") || option.equals("tree")))
@@ -775,42 +756,14 @@ public class MenuEntrySwapperPlugin extends Plugin
 		}
 		else if (option.equals("value"))
 		{
-			if (config.shopBuy() != BuyMode.OFF)
+			if (config.shopBuy() != null && config.shopBuy() != BuyMode.OFF)
 			{
-				switch (config.shopBuy())
-				{
-					case BUY_1:
-						swap("buy 1", option, target, index);
-						break;
-					case BUY_5:
-						swap("buy 5", option, target, index);
-						break;
-					case BUY_10:
-						swap("buy 10", option, target, index);
-						break;
-					case BUY_50:
-						swap("buy 50", option, target, index);
-						break;
-				}
+				swap(config.shopBuy().getOption(), option, target, index);
 			}
 
-			if (config.shopSell() != SellMode.OFF)
+			if (config.shopSell() != null && config.shopSell() != SellMode.OFF)
 			{
-				switch (config.shopSell())
-				{
-					case SELL_1:
-						swap("sell 1", option, target, index);
-						break;
-					case SELL_5:
-						swap("sell 5", option, target, index);
-						break;
-					case SELL_10:
-						swap("sell 10", option, target, index);
-						break;
-					case SELL_50:
-						swap("sell 50", option, target, index);
-						break;
-				}
+				swap(config.shopSell().getOption(), option, target, index);
 			}
 		}
 
@@ -924,7 +877,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 	{
 		if (strict)
 		{
-			List<Integer> indexes = optionIndexes.get(option);
+			List<Integer> indexes = optionIndexes.get(option.toLowerCase());
 
 			// We want the last index which matches the target, as that is what is top-most
 			// on the menu

@@ -37,11 +37,5 @@ public enum HouseMode
 	BUILD_MODE("Build mode"),
 	FRIENDS_HOUSE("Friend's House");
 
-	private final String name;
-
-	@Override
-	public String toString()
-	{
-		return name;
-	}
+	private final String option;
 }
