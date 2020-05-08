@@ -38,4 +38,10 @@ public enum HouseMode
 	FRIENDS_HOUSE("Friend's House");
 
 	private final String option;
+
+	@Override
+	public String toString()
+	{
+		return option;
+	}
 }
