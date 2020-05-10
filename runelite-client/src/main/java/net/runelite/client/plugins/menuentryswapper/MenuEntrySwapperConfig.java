@@ -413,23 +413,13 @@ public interface MenuEntrySwapperConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "shopBuy",
-		name = "Shop Buy",
-		description = "Swaps the Buy options with Value on items in shops."
+		keyName = "shopBuySellSwap",
+		name = "Shift-rightclick buy/sell quantities",
+		description = "Shift-rightclick on items in the shop interface to enable buy/sell option swaps for that item."
 	)
-	default BuyMode shopBuy()
+	default boolean shopBuySellSwap()
 	{
-		return BuyMode.OFF;
-	}
-
-	@ConfigItem(
-		keyName = "shopSell",
-		name = "Shop Sell",
-		description = "Swaps the Sell options with Value on items in your inventory when selling to shops."
-	)
-	default SellMode shopSell()
-	{
-		return SellMode.OFF;
+		return true;
 	}
 
 	@ConfigItem(

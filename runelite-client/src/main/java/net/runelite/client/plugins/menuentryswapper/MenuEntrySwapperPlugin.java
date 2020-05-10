@@ -29,8 +29,12 @@ package net.runelite.client.plugins.menuentryswapper;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Provides;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.inject.Inject;
 import lombok.Getter;
 import lombok.Setter;
@@ -79,6 +83,10 @@ public class MenuEntrySwapperPlugin extends Plugin
 	private static final String CONFIG_GROUP = "shiftclick";
 	private static final String ITEM_KEY_PREFIX = "item_";
 
+	public static final String BUY_SELL_OPTION_REGEX = "(Buy|Sell) (\\d+)";
+	public static final String SET_BUY_SELL_QUANTITY_REGEX = "Set (buy|sell) quantity (\\d+)";
+	public static final String RESET_BUY_SELL_QUANTITY_REGEX = "Reset (buy|sell) quantity";
+
 	private static final WidgetMenuOption FIXED_INVENTORY_TAB_CONFIGURE = new WidgetMenuOption(CONFIGURE,
 		MENU_TARGET, WidgetInfo.FIXED_VIEWPORT_INVENTORY_TAB);
 
@@ -112,6 +120,9 @@ public class MenuEntrySwapperPlugin extends Plugin
 		"wizard cromperty",
 		"brimstail"
 	);
+
+	private final Map<String, Integer> buyQuantityMap = new HashMap<>();
+	private final Map<String, Integer> sellQuantityMap = new HashMap<>();
 
 	@Inject
 	private Client client;
@@ -312,6 +323,47 @@ public class MenuEntrySwapperPlugin extends Plugin
 	@Subscribe
 	public void onMenuEntryAdded(MenuEntryAdded menuEntryAdded)
 	{
+		if (config.shopBuySellSwap() && shiftModifier)
+		{
+			String option = Text.removeTags(menuEntryAdded.getOption());
+
+			if (option.matches(BUY_SELL_OPTION_REGEX))
+			{
+				Matcher matcher = Pattern.compile(BUY_SELL_OPTION_REGEX).matcher(option);
+				matcher.matches();
+				String operation = matcher.group(1);
+				int quantity = Integer.valueOf(matcher.group(2));
+
+				MenuEntry[] menuEntries = client.getMenuEntries();
+				MenuEntry setQuantityEntry = new MenuEntry();
+				setQuantityEntry.setOption("Set " + operation.toLowerCase() + " quantity " + quantity);
+				setQuantityEntry.setTarget(menuEntryAdded.getTarget());
+				setQuantityEntry.setType(MenuAction.RUNELITE.getId());
+				menuEntries[menuEntries.length - 1] = setQuantityEntry;
+				client.setMenuEntries(menuEntries);
+			}
+			else if ("Value".equals(option))
+			{
+				MenuEntry[] menuEntries = client.getMenuEntries();
+				// Search for Buy or Sell menu entry to figure out if we are in a buy or sell menu.
+				for (int i = 0; i < menuEntries.length; i++)
+				{
+					Matcher matcher = Pattern.compile(SET_BUY_SELL_QUANTITY_REGEX).matcher(Text.removeTags(menuEntries[i].getOption()));
+					if (matcher.matches())
+					{
+						String operation = matcher.group(1);
+						MenuEntry resetQuantityEntry = new MenuEntry();
+						resetQuantityEntry.setOption("Reset " + operation + " quantity");
+						resetQuantityEntry.setTarget(menuEntryAdded.getTarget());
+						resetQuantityEntry.setType(MenuAction.RUNELITE.getId());
+						menuEntries[menuEntries.length - 1] = resetQuantityEntry;
+						client.setMenuEntries(menuEntries);
+						break;
+					}
+				}
+			}
+		}
+
 		// This swap needs to happen prior to drag start on click, which happens during
 		// widget ticking and prior to our client tick event. This is because drag start
 		// is what builds the context menu row which is what the eventual click will use
@@ -367,57 +419,79 @@ public class MenuEntrySwapperPlugin extends Plugin
 	@Subscribe
 	public void onMenuOptionClicked(MenuOptionClicked event)
 	{
-		if (event.getMenuAction() != MenuAction.RUNELITE || event.getWidgetId() != WidgetInfo.INVENTORY.getId())
+		if (event.getMenuAction() != MenuAction.RUNELITE)
 		{
 			return;
 		}
 
-		int itemId = event.getId();
-
-		if (itemId == -1)
+		if (event.getWidgetId() == WidgetInfo.INVENTORY.getId())
 		{
-			return;
-		}
+			int itemId = event.getId();
 
-		String option = event.getMenuOption();
-		String target = event.getMenuTarget();
-		ItemComposition itemComposition = client.getItemDefinition(itemId);
-
-		if (option.equals(RESET) && target.equals(MENU_TARGET))
-		{
-			unsetSwapConfig(itemId);
-			return;
-		}
-
-		if (!itemComposition.getName().equals(Text.removeTags(target)))
-		{
-			return;
-		}
-
-		int index = -1;
-		boolean valid = false;
-
-		if (option.equals("Use")) //because "Use" is not in inventoryActions
-		{
-			valid = true;
-		}
-		else
-		{
-			String[] inventoryActions = itemComposition.getInventoryActions();
-
-			for (index = 0; index < inventoryActions.length; index++)
+			if (itemId == -1)
 			{
-				if (option.equals(inventoryActions[index]))
+				return;
+			}
+
+			String option = event.getMenuOption();
+			String target = event.getMenuTarget();
+			ItemComposition itemComposition = client.getItemDefinition(itemId);
+
+			if (option.equals(RESET) && target.equals(MENU_TARGET))
+			{
+				unsetSwapConfig(itemId);
+				return;
+			}
+
+			if (!itemComposition.getName().equals(Text.removeTags(target)))
+			{
+				return;
+			}
+
+			int index = -1;
+			boolean valid = false;
+
+			if (option.equals("Use")) //because "Use" is not in inventoryActions
+			{
+				valid = true;
+			}
+			else
+			{
+				String[] inventoryActions = itemComposition.getInventoryActions();
+
+				for (index = 0; index < inventoryActions.length; index++)
 				{
-					valid = true;
-					break;
+					if (option.equals(inventoryActions[index]))
+					{
+						valid = true;
+						break;
+					}
 				}
 			}
-		}
 
-		if (valid)
+			if (valid)
+			{
+				setSwapConfig(itemId, index);
+			}
+		}
+		else if (event.getMenuOption().matches(SET_BUY_SELL_QUANTITY_REGEX))
 		{
-			setSwapConfig(itemId, index);
+			Matcher matcher = Pattern.compile(SET_BUY_SELL_QUANTITY_REGEX).matcher(event.getMenuOption());
+			if (matcher.matches())
+			{
+				String operation = matcher.group(1);
+				int quantity = Integer.valueOf(matcher.group(2));
+				(("buy".equals(operation)) ? buyQuantityMap : sellQuantityMap).put(Text.removeTags(event.getMenuTarget()).toLowerCase(), quantity);
+			}
+		}
+		else if (event.getMenuOption().matches(RESET_BUY_SELL_QUANTITY_REGEX))
+		{
+			Matcher matcher = Pattern.compile(RESET_BUY_SELL_QUANTITY_REGEX).matcher(event.getMenuOption());
+			if (matcher.matches())
+			{
+				String operation = matcher.group(1);
+				(("buy".equals(operation)) ? buyQuantityMap : sellQuantityMap).remove(Text.removeTags(event.getMenuTarget()).toLowerCase());
+			}
 		}
 	}
 
@@ -754,16 +828,17 @@ public class MenuEntrySwapperPlugin extends Plugin
 					break;
 			}
 		}
-		else if (option.equals("value"))
+		else if (config.shopBuySellSwap() && option.equals("value"))
 		{
-			if (config.shopBuy() != null && config.shopBuy() != BuyMode.OFF)
+			Integer buyQuantity = buyQuantityMap.get(target);
+			if (buyQuantity != null)
 			{
-				swap(config.shopBuy().getOption(), option, target, index);
+				swap("Buy " + buyQuantity, option, target, index);
 			}
-
-			if (config.shopSell() != null && config.shopSell() != SellMode.OFF)
+			Integer sellQuantity = sellQuantityMap.get(target);
+			if (sellQuantity != null)
 			{
-				swap(config.shopSell().getOption(), option, target, index);
+				swap("Sell " + sellQuantity, option, target, index);
 			}
 		}
 
