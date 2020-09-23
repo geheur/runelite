@@ -156,6 +156,9 @@ public class WidgetID
 	public static final int HALLOWED_SEPULCHRE_TIMER_GROUP_ID = 668;
 	public static final int BANK_PIN_GROUP_ID = 213;
 	public static final int HEALTH_OVERLAY_BAR_GROUP_ID = 303;
+	public static final int CHAMBERS_OF_XERIC_STORAGE_UNIT_PRIVATE_GROUP_ID = 271;
+	public static final int CHAMBERS_OF_XERIC_STORAGE_UNIT_SHARED_GROUP_ID = 550;
+	public static final int CHAMBERS_OF_XERIC_STORAGE_UNIT_INVENTORY_GROUP_ID = 551;
 
 	static class WorldMap
 	{
@@ -253,6 +256,7 @@ public class WidgetID
 		static final int BANK_CONTAINER = 1;
 		static final int INVENTORY_ITEM_CONTAINER = 3;
 		static final int BANK_TITLE_BAR = 3;
+		static final int EQUIPMENT_SCREEN_INVENTORY_ITEM_CONTAINER = 4;
 		static final int TUTORIAL_BUTTON = 4;
 		static final int ITEM_COUNT_TOP = 5;
 		static final int ITEM_COUNT_BAR = 6;
@@ -269,6 +273,12 @@ public class WidgetID
 		static final int EQUIPMENT_CONTENT_CONTAINER = 68;
 		static final int SETTINGS_BUTTON = 111;
 		static final int EQUIPMENT_BUTTON = 112;
+	}
+
+	static class ChambersOfXericStorageUnit
+	{
+		static final int STORAGE_UNIT_PRIVATE_ITEM_CONTAINER = 6;
+		static final int STORAGE_UNIT_INVENTORY_ITEM_CONTAINER = 1;
 	}
 
 	static class GrandExchange
