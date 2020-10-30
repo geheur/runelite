@@ -26,6 +26,9 @@ package net.runelite.client.plugins.playerindicators;
 
 import com.google.inject.Provides;
 import java.awt.Color;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import javax.inject.Inject;
 import lombok.Value;
 import net.runelite.api.FriendsChatRank;
@@ -35,6 +38,7 @@ import static net.runelite.api.MenuAction.*;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.Player;
 import net.runelite.api.events.ClientTick;
+import net.runelite.api.widgets.Widget;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.FriendChatManager;
@@ -71,6 +75,8 @@ public class PlayerIndicatorsPlugin extends Plugin
 	@Inject
 	private FriendChatManager friendChatManager;
 
+	public List<String> tobTeamMembers = Collections.emptyList();
+
 	@Provides
 	PlayerIndicatorsConfig provideConfig(ConfigManager configManager)
 	{
@@ -96,6 +102,16 @@ public class PlayerIndicatorsPlugin extends Plugin
 	@Subscribe
 	public void onClientTick(ClientTick clientTick)
 	{
+		Widget widget = client.getWidget(28, 9);
+		if (widget != null) {
+			List<String> temp = Arrays.asList(widget.getText().split("<br>"));
+			if (!temp.equals(this.tobTeamMembers)) {
+				System.out.println(widget.getText());
+				System.out.println(Arrays.asList(widget.getText().split("<br>")));
+			}
+			this.tobTeamMembers = temp;
+		}
+
 		if (client.isMenuOpen())
 		{
 			return;
@@ -188,10 +204,10 @@ public class PlayerIndicatorsPlugin extends Plugin
 				image = friendChatManager.getIconNumber(rank);
 			}
 		}
-		else if (config.highlightTeamMembers()
-			&& player.getTeam() > 0 && client.getLocalPlayer().getTeam() == player.getTeam())
-		{
-			color = config.getTeamMemberColor();
+		else if (config.highlightTeamMembers()) {
+			if (player.getTeam() > 0 && client.getLocalPlayer().getTeam() == player.getTeam()) {
+				color = config.getTeamMemberColor();
+			}
 		}
 		else if (config.highlightOthers() && !player.isFriendsChatMember())
 		{

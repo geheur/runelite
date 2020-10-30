@@ -87,6 +87,28 @@ public interface MusicConfig extends Config
 	}
 
 	@ConfigItem(
+			keyName = "logSoundIds",
+			name = "Log Sound Ids",
+			description = "whether to log sound ids to stdout",
+			position = 5
+	)
+	default boolean logSoundIds()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+			keyName = "soundIdsToMute",
+			name = "Muted sounds",
+			description = "Sound ids to mute.",
+			position = 6
+	)
+	default String mutedSounds()
+	{
+		return "";
+	}
+
+	@ConfigItem(
 		keyName = "musicVolume",
 		name = "",
 		description = "",

@@ -29,20 +29,8 @@ import ch.qos.logback.classic.Logger;
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Ints;
 import com.google.inject.Provides;
-import java.awt.image.BufferedImage;
-import static java.lang.Math.min;
-import java.util.Arrays;
-import java.util.List;
-import javax.inject.Inject;
 import lombok.Getter;
-import net.runelite.api.ChatMessageType;
-import net.runelite.api.Client;
-import net.runelite.api.Experience;
-import net.runelite.api.MenuAction;
-import net.runelite.api.MenuEntry;
-import net.runelite.api.NPC;
-import net.runelite.api.Player;
-import net.runelite.api.Skill;
+import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.CommandExecuted;
 import net.runelite.api.events.MenuEntryAdded;
@@ -55,15 +43,26 @@ import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.game.WorldService;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.PluginManager;
+import net.runelite.client.plugins.worldhopper.WorldHopperPlugin;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.JagexColors;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.ColorUtil;
 import net.runelite.client.util.ImageUtil;
+import net.runelite.http.api.worlds.WorldResult;
 import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import java.awt.image.BufferedImage;
+import java.util.Arrays;
+import java.util.List;
+
+import static java.lang.Math.min;
 
 @PluginDescriptor(
 	name = "Developer Tools",
@@ -346,6 +345,12 @@ public class DevToolsPlugin extends Plugin
 				Player localPlayer = client.getLocalPlayer();
 				localPlayer.setGraphic(id);
 				localPlayer.setSpotAnimFrame(0);
+				break;
+			}
+			case "sfx":
+			{
+				int id = Integer.parseInt(args[0]);
+				client.playSoundEffect(id);
 				break;
 			}
 			case "transform":

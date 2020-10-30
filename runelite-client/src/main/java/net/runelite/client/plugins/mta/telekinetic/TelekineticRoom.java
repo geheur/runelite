@@ -24,20 +24,6 @@
  */
 package net.runelite.client.plugins.mta.telekinetic;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Polygon;
-import java.awt.Rectangle;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
-import java.util.Stack;
-import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
@@ -62,6 +48,21 @@ import net.runelite.api.widgets.WidgetID;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.mta.MTAConfig;
 import net.runelite.client.plugins.mta.MTARoom;
+
+import javax.inject.Inject;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Polygon;
+import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import java.util.Stack;
 
 @Slf4j
 public class TelekineticRoom extends MTARoom
@@ -249,9 +250,45 @@ public class TelekineticRoom extends MTARoom
 				{
 					client.setHintArrow(optimal);
 					renderWorldPoint(graphics2D, optimal);
+					graphics2D.setColor(Color.CYAN);
+					WorldPoint optimal2 = optimal2(optimal);
+
+					if (optimal2 != null)
+					{
+//						client.setHintArrow(optimal2);
+						renderWorldPoint(graphics2D, optimal2);
+					}
 				}
 			}
 		}
+	}
+
+	private WorldPoint optimal2(WorldPoint optimal)
+	{
+//		WorldPoint current = client.getLocalPlayer().getWorldLocation();
+		WorldPoint current = optimal;
+
+		Direction next = moves.pop();
+		Direction next2 = moves.pop();
+		WorldArea areaNext = getIndicatorLine(next2);
+		WorldPoint nearestNext = nearest(areaNext, current);
+
+		if (moves.isEmpty())
+		{
+			moves.push(next2);
+			moves.push(next);
+
+			return nearestNext;
+		}
+
+		if (moves.empty()) return null;
+		Direction after = moves.peek();
+		moves.push(next2);
+		moves.push(next);
+		WorldArea areaAfter = getIndicatorLine(after);
+		WorldPoint nearestAfter = nearest(areaAfter, nearestNext);
+
+		return nearest(areaNext, nearestAfter);
 	}
 
 	private WorldPoint optimal()
@@ -416,10 +453,10 @@ public class TelekineticRoom extends MTARoom
 	private LocalPoint[] neighbours(LocalPoint point)
 	{
 		return new LocalPoint[]
-		{
-			neighbour(point, Direction.NORTH), neighbour(point, Direction.SOUTH),
-			neighbour(point, Direction.EAST), neighbour(point, Direction.WEST)
-		};
+				{
+						neighbour(point, Direction.NORTH), neighbour(point, Direction.SOUTH),
+						neighbour(point, Direction.EAST), neighbour(point, Direction.WEST)
+				};
 	}
 
 	private LocalPoint neighbour(LocalPoint point, Direction direction)
@@ -454,8 +491,8 @@ public class TelekineticRoom extends MTARoom
 		while (area.canTravelInDirection(client, dx, dy))
 		{
 			worldPoint = area.toWorldPoint()
-				.dx(dx)
-				.dy(dy);
+					.dx(dx)
+					.dy(dy);
 			area = new WorldArea(worldPoint, 1, 1);
 		}
 

@@ -35,6 +35,7 @@ public enum ShiftDepositMode
 	DEPOSIT_5("Deposit-5", 4, 3, 2),
 	DEPOSIT_10("Deposit-10", 5, 4, 3),
 	DEPOSIT_X("Deposit-X", 6, 6, 5),
+	DEPOSIT_SET_X("Deposit-Set-X", 7, 6, 5),
 	DEPOSIT_ALL("Deposit-All", 8, 5, 4),
 	EXTRA_OP("Eat/Wield/Etc.", 9, 0, 0),
 	OFF("Off", 0, 0, 0);

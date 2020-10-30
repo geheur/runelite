@@ -36,6 +36,7 @@ public enum ShiftWithdrawMode
 	WITHDRAW_5("Withdraw-5", MenuAction.CC_OP, 3, 2),
 	WITHDRAW_10("Withdraw-10", MenuAction.CC_OP, 4, 3),
 	WITHDRAW_X("Withdraw-X", MenuAction.CC_OP, 5, 5),
+	WITHDRAW_SET_X("Withdraw-Set-X", MenuAction.CC_OP_LOW_PRIORITY, 6, 5),
 	WITHDRAW_ALL("Withdraw-All", MenuAction.CC_OP_LOW_PRIORITY, 7, 4),
 	// chambers of xeric storage units do not have an "all-but-1" option, so this option will choose "Withdraw-all"
 	// instead when using the storage unit.

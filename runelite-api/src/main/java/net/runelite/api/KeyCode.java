@@ -29,5 +29,12 @@ package net.runelite.api;
  */
 public final class KeyCode
 {
+    //esc 13, 1 16, q 32, a 48, z 64.
 	public static final int KC_SHIFT = 81;
+	public static final int KC_X = 65;
+	public static final int KC_C = 66;
+	public static final int KC_F = 51;
+	public static final int KC_T = 36;
+	public static final int KC_R = 35;
+	public static final int KC_Z = 64;
 }

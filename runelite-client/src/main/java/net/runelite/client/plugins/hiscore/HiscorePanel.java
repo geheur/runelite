@@ -29,15 +29,13 @@ package net.runelite.client.plugins.hiscore;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.Insets;
+
+import java.awt.*;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.text.DecimalFormat;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -446,6 +444,7 @@ public class HiscorePanel extends PluginPanel
 			JLabel label = entry.getValue();
 			Skill s;
 
+			label.setForeground(Color.WHITE);
 			if (skill == null)
 			{
 				if (result.getPlayer() != null)
@@ -469,7 +468,12 @@ public class HiscorePanel extends PluginPanel
 				int level = -1;
 				if (config.virtualLevels() && isSkill && exp > -1L)
 				{
-					level = Experience.getLevelForXp((int) exp);
+					if (s.getLevel() == 99) {
+						level = (int) exp;
+						label.setForeground(new Color(0x00ff88));
+					} else {
+						level = Experience.getLevelForXp((int) exp);
+					}
 				}
 				else if (!isSkill || exp != -1L)
 				{
@@ -741,9 +745,13 @@ public class HiscorePanel extends PluginPanel
 		{
 			return Integer.toString(level);
 		}
-		else
+		else if (level < 10000000)
 		{
 			return (level / 1000) + "k";
+		}
+		else
+		{
+			return new DecimalFormat("#0.0").format(level / 1_000_000.0) + "M";
 		}
 	}
 

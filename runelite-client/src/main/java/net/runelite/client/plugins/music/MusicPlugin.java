@@ -28,10 +28,8 @@ package net.runelite.client.plugins.music;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Provides;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Set;
+
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
@@ -75,6 +73,7 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.tooltip.Tooltip;
 import net.runelite.client.ui.overlay.tooltip.TooltipManager;
+import net.runelite.client.util.Text;
 
 @PluginDescriptor(
 	name = "Music",
@@ -631,6 +630,14 @@ public class MusicPlugin extends Plugin
 	@Subscribe
 	public void onAreaSoundEffectPlayed(AreaSoundEffectPlayed areaSoundEffectPlayed)
 	{
+	    if (musicConfig.logSoundIds()) {
+			Actor source1 = areaSoundEffectPlayed.getSource();
+			System.out.println("area sound effect: " + areaSoundEffectPlayed.getSoundId() + " " + ((source1 == null) ? "" : source1.getName()));
+		}
+		List<String> mutedSounds = Text.fromCSV(musicConfig.mutedSounds());
+		if (mutedSounds.contains(Integer.toString(areaSoundEffectPlayed.getSoundId()))) {
+			areaSoundEffectPlayed.consume();
+		}
 		Actor source = areaSoundEffectPlayed.getSource();
 		int soundId = areaSoundEffectPlayed.getSoundId();
 		if (source == client.getLocalPlayer()
@@ -660,6 +667,14 @@ public class MusicPlugin extends Plugin
 	@Subscribe
 	public void onSoundEffectPlayed(SoundEffectPlayed soundEffectPlayed)
 	{
+	    if (musicConfig.logSoundIds()) {
+			Actor source1 = soundEffectPlayed.getSource();
+			System.out.println("sound effect: " + soundEffectPlayed.getSoundId() + " " + ((source1 == null) ? "" : source1.getName()));
+		}
+		List<String> mutedSounds = Text.fromCSV(musicConfig.mutedSounds());
+		if (mutedSounds.contains(Integer.toString(soundEffectPlayed.getSoundId()))) {
+			soundEffectPlayed.consume();
+		}
 		if (musicConfig.mutePrayerSounds()
 			&& PRAYER_SOUNDS.contains(soundEffectPlayed.getSoundId()))
 		{

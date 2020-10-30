@@ -26,25 +26,11 @@
  */
 package net.runelite.client.plugins.puzzlesolver;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FontMetrics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.image.BufferedImage;
-import java.util.Arrays;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.InventoryID;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
-import static net.runelite.api.SpriteID.MINIMAP_DESTINATION_FLAG;
-import static net.runelite.client.plugins.puzzlesolver.solver.PuzzleSolver.BLANK_TILE_VALUE;
-import static net.runelite.client.plugins.puzzlesolver.solver.PuzzleSolver.DIMENSION;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.game.SpriteManager;
@@ -61,6 +47,22 @@ import net.runelite.client.ui.overlay.OverlayUtil;
 import net.runelite.client.ui.overlay.components.BackgroundComponent;
 import net.runelite.client.ui.overlay.components.TextComponent;
 import net.runelite.client.util.ImageUtil;
+
+import javax.inject.Inject;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
+import java.util.Arrays;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+
+import static net.runelite.api.SpriteID.MINIMAP_DESTINATION_FLAG;
+import static net.runelite.client.plugins.puzzlesolver.solver.PuzzleSolver.BLANK_TILE_VALUE;
+import static net.runelite.client.plugins.puzzlesolver.solver.PuzzleSolver.DIMENSION;
 
 public class PuzzleSolverOverlay extends Overlay
 {
@@ -175,7 +177,7 @@ public class PuzzleSolverOverlay extends Overlay
 					// see if we can find the current state in the 5 previous steps
 					if (!foundPosition)
 					{
-						for (int i = 1; i < 6; i++)
+						for (int i = 1; i < 7; i++)
 						{
 							int j = solver.getPosition() - i;
 
@@ -259,7 +261,9 @@ public class PuzzleSolverOverlay extends Overlay
 								int lastBlankY = currentMove.getEmptyPiece() / DIMENSION;
 
 								// Display the next 3 steps
-								for (int i = 1; i < 4; i++)
+								int lastx = 0;
+								int lasty = 0;
+								for (int i = 1; i < 6; i++)
 								{
 									int j = solver.getPosition() + i;
 
@@ -299,6 +303,9 @@ public class PuzzleSolverOverlay extends Overlay
 										arrow = getUpArrow();
 									}
 
+									Color colors[] = {Color.RED, Color.ORANGE, Color.YELLOW, Color.GREEN, Color.BLUE, Color.BLUE};
+									arrow = ImageUtil.outlineImage(arrow, colors[i - 1]);
+
 									if (arrow == null)
 									{
 										continue;
@@ -311,6 +318,18 @@ public class PuzzleSolverOverlay extends Overlay
 											+ PUZZLE_TILE_SIZE / 2 - arrow.getHeight() / 2;
 
 									OverlayUtil.renderImageLocation(graphics, new net.runelite.api.Point(x, y), arrow);
+									if (lastx != 0) {
+										int nextx = puzzleBoxLocation.getX() + blankX * PUZZLE_TILE_SIZE + PUZZLE_TILE_SIZE / 2 - arrow.getWidth();
+										int nexty = puzzleBoxLocation.getY() + blankY * PUZZLE_TILE_SIZE + PUZZLE_TILE_SIZE / 2 - arrow.getHeight();
+										graphics.drawLine(
+												nextx,
+												nexty,
+												lastx,
+												lasty
+										);
+										lastx = nextx;
+										lasty = nexty;
+									}
 
 									lastBlankX = blankX;
 									lastBlankY = blankY;
@@ -346,7 +365,7 @@ public class PuzzleSolverOverlay extends Overlay
 
 		// Solve the puzzle if we don't have an up to date solution
 		if (solver == null || cachedItems == null
-			|| (!shouldCache && solver.hasExceededWaitDuration() && !Arrays.equals(cachedItems, itemIds)))
+				|| (!shouldCache && solver.hasExceededWaitDuration() && !Arrays.equals(cachedItems, itemIds)))
 		{
 			solve(itemIds, useNormalSolver);
 			shouldCache = true;

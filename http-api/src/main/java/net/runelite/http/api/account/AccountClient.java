@@ -64,8 +64,10 @@ public class AccountClient
 			.url(url)
 			.build();
 
+		System.out.println("request: " + request.toString());
 		try (Response response = client.newCall(request).execute())
 		{
+			System.out.println("body: " + response.body().string());
 			InputStream in = response.body().byteStream();
 			return RuneLiteAPI.GSON.fromJson(new InputStreamReader(in, StandardCharsets.UTF_8), OAuthResponse.class);
 		}

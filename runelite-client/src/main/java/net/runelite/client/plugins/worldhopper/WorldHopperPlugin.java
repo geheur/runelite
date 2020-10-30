@@ -26,16 +26,15 @@
  */
 package net.runelite.client.plugins.worldhopper;
 
+import ch.qos.logback.classic.Level;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ObjectArrays;
+import com.google.common.primitives.Ints;
 import com.google.inject.Provides;
 import java.awt.image.BufferedImage;
 import java.time.Instant;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -46,24 +45,9 @@ import javax.swing.SwingUtilities;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.ChatMessageType;
-import net.runelite.api.ChatPlayer;
-import net.runelite.api.FriendsChatMember;
-import net.runelite.api.FriendsChatManager;
-import net.runelite.api.Client;
-import net.runelite.api.Friend;
-import net.runelite.api.GameState;
-import net.runelite.api.MenuAction;
-import net.runelite.api.MenuEntry;
-import net.runelite.api.NameableContainer;
-import net.runelite.api.Varbits;
-import net.runelite.api.events.ChatMessage;
-import net.runelite.api.events.GameStateChanged;
-import net.runelite.api.events.GameTick;
-import net.runelite.api.events.MenuEntryAdded;
-import net.runelite.api.events.PlayerMenuOptionClicked;
-import net.runelite.api.events.VarbitChanged;
-import net.runelite.api.events.WorldListLoad;
+import net.runelite.api.*;
+import net.runelite.api.events.*;
+import net.runelite.api.kit.KitType;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatColorType;
@@ -107,7 +91,7 @@ public class WorldHopperPlugin extends Plugin
 	private static final String HOP_TO = "Hop-to";
 	private static final String KICK_OPTION = "Kick";
 	private static final ImmutableList<String> BEFORE_OPTIONS = ImmutableList.of("Add friend", "Remove friend", KICK_OPTION);
-	private static final ImmutableList<String> AFTER_OPTIONS = ImmutableList.of("Message");
+	private static final ImmutableList<String> AFTER_OPTIONS = ImmutableList.of("Message", "Add ignore", "Remove friend", KICK_OPTION);
 
 	@Inject
 	private Client client;
@@ -665,6 +649,18 @@ public class WorldHopperPlugin extends Plugin
 
 		quickHopTargetWorld = rsWorld;
 		displaySwitcherAttempts = 0;
+	}
+
+	@Subscribe
+	public void onCommandExecuted(CommandExecuted commandExecuted)
+	{
+		String[] args = commandExecuted.getArguments();
+
+		if ("hop".equals(commandExecuted.getCommand()))
+		{
+			int desiredWorld = Integer.parseInt(args[0]);
+			hop(desiredWorld);
+		}
 	}
 
 	@Subscribe

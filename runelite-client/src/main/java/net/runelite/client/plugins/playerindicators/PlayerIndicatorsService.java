@@ -24,24 +24,27 @@
  */
 package net.runelite.client.plugins.playerindicators;
 
-import java.awt.Color;
-import java.util.function.BiConsumer;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.Player;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.awt.*;
+import java.util.function.BiConsumer;
 
 @Singleton
 public class PlayerIndicatorsService
 {
 	private final Client client;
 	private final PlayerIndicatorsConfig config;
+	private final PlayerIndicatorsPlugin plugin;
 
 	@Inject
-	private PlayerIndicatorsService(Client client, PlayerIndicatorsConfig config)
+	private PlayerIndicatorsService(Client client, PlayerIndicatorsConfig config, PlayerIndicatorsPlugin plugin)
 	{
 		this.config = config;
 		this.client = client;
+		this.plugin = plugin;
 	}
 
 	public void forEachPlayer(final BiConsumer<Player, Color> consumer)
@@ -77,6 +80,9 @@ public class PlayerIndicatorsService
 			else if (config.drawFriendsChatMemberNames() && isFriendsChatMember)
 			{
 				consumer.accept(player, config.getFriendsChatMemberColor());
+			}
+			else if (config.highlightTeamMembers() && plugin.tobTeamMembers.contains(player.getName())) {
+				consumer.accept(player, config.getTeamMemberColor());
 			}
 			else if (config.highlightTeamMembers() && localPlayer.getTeam() > 0 && localPlayer.getTeam() == player.getTeam())
 			{

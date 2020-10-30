@@ -34,6 +34,7 @@ import java.util.Set;
 import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.VarClientStr;
+import net.runelite.api.widgets.Widget;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.input.KeyListener;
 
@@ -57,11 +58,116 @@ class KeyRemappingListener implements KeyListener
 	@Override
 	public void keyTyped(KeyEvent e)
 	{
+		Map<String, Character> map = null;
+
+		Widget jewelleryBoxWidget = client.getWidget(590, 0);
+		if (jewelleryBoxWidget != null && !jewelleryBoxWidget.isSelfHidden()) map = jewelleryMap;
+		Widget spiritTreeWidget = client.getWidget(187, 0);
+		if (spiritTreeWidget != null && !spiritTreeWidget.isSelfHidden()) map = treeMap;
+
+		boolean b = e.getKeyChar() >= '0' && e.getKeyChar() <= '9';
+		if (map != null && !b) {
+			long currentTime = System.currentTimeMillis();
+			if (currentTime - lastJewelleryBoxKeyPressTime > 5000) {
+				jewelleryBoxStringSoFar = "";
+			}
+			lastJewelleryBoxKeyPressTime = currentTime;
+
+			String character = Character.toString(e.getKeyChar());
+			this.jewelleryBoxStringSoFar += character;
+//			System.out.println("string so far is " + this.jewelleryBoxStringSoFar);
+
+			boolean partialMatch = false;
+			for (String keySequence : map.keySet()) {
+				if (keySequence.startsWith(this.jewelleryBoxStringSoFar)) {
+					partialMatch = true;
+				}
+			}
+
+			if (!partialMatch) {
+//				System.out.println("no partial match");
+				this.jewelleryBoxStringSoFar = character;
+			}
+
+			Character match = map.get(this.jewelleryBoxStringSoFar);
+//			System.out.println("match is " + match);
+			if (match != null) {
+				e.setKeyChar(match);
+				this.jewelleryBoxStringSoFar = "";
+			} else {
+				e.setKeyChar('z');
+			}
+		}
+
 		char keyChar = e.getKeyChar();
 		if (keyChar != KeyEvent.CHAR_UNDEFINED && blockedChars.contains(keyChar) && plugin.chatboxFocused())
 		{
 			e.consume();
 		}
+	}
+
+	private long lastJewelleryBoxKeyPressTime = 0;
+	private String jewelleryBoxStringSoFar = "";
+
+	private static final Map<String, Character> jewelleryMap = new HashMap<>();
+	static {
+		jewelleryMap.put("da", '1'); // Duel Arena.
+		jewelleryMap.put("ca", '2'); // Castle Wars.
+		jewelleryMap.put("cw", '2'); // Castle Wars.
+		jewelleryMap.put("fe", '2'); // Castle Wars.
+
+		jewelleryMap.put("bu", '4'); // Burthorpe.
+		jewelleryMap.put("ba", '5'); // Barbarian Outpost.
+		jewelleryMap.put("bo", '5'); // Barbarian Outpost.
+		jewelleryMap.put("cb", '6'); // Corporeal Beast.
+		jewelleryMap.put("corp", '6'); // Corporeal Beast.
+		jewelleryMap.put("tog", '7'); // Tears of Guthix.
+		jewelleryMap.put("te", '7'); // Tears of Guthix.
+		jewelleryMap.put("wt", '8'); // Wintertodt.
+		jewelleryMap.put("wi", '8'); // Wintertodt.
+
+		jewelleryMap.put("bu", '9'); // Burthorpe.
+		jewelleryMap.put("ch", 'a'); // Champ's.
+		jewelleryMap.put("mo", 'b'); // Monastery.
+		jewelleryMap.put("ra", 'c'); // Ranging Guild.
+
+		jewelleryMap.put("fg", 'd'); // Fishing.
+		jewelleryMap.put("fi", 'd'); // Fishing.
+		jewelleryMap.put("mi", 'e'); // Mining.
+		jewelleryMap.put("cr", 'f'); // Crafting.
+		jewelleryMap.put("cook", 'g'); // Cooking.
+		jewelleryMap.put("wc", 'h'); // Woodcutting.
+		jewelleryMap.put("wood", 'h'); // Woodcutting.
+		jewelleryMap.put("fa", 'i'); // Farming Guild.
+
+		jewelleryMap.put("mm", 'j'); // Miscellania.
+		jewelleryMap.put("ki", 'j'); // Miscellania.
+		jewelleryMap.put("ge", 'k'); // Grand Exchange.
+		jewelleryMap.put("pa", 'l'); // fally park.
+		jewelleryMap.put("do", 'm'); // the rock.
+
+		jewelleryMap.put("e", 'n'); // Edgeville.
+		jewelleryMap.put("ka", 'o'); // karamja.
+		jewelleryMap.put("dr", 'p'); // draynor.
+		jewelleryMap.put("ak", 'q'); // al kharid.
+		jewelleryMap.put("al", 'q'); // al kharid.
+	}
+
+	private static final Map<String, Character> treeMap = new HashMap<>();
+	static {
+		treeMap.put("v", '1'); // Tree Gnome Village.
+		treeMap.put("g", '2'); // Gnome Stronghold.
+		treeMap.put("b", '3'); // Battlefield of Khazard.
+		treeMap.put("ge", '4'); // Grand Exchange.
+		treeMap.put("fh", '5'); // Feldip Hills.
+		treeMap.put("fe", '5'); // Feldip Hills.
+		treeMap.put("p", '6'); // Priffdinas.
+		treeMap.put("s", '7'); // Port Sarim.
+		treeMap.put("c", '8'); // Etceteria.
+		treeMap.put("b", '9'); // Brimhaven.
+		treeMap.put("h", 'a'); // Hosidius.
+		treeMap.put(" ", 'b'); // Farming Guild.
+		treeMap.put("poh", 'c'); // House.
 	}
 
 	@Override
@@ -99,59 +205,72 @@ class KeyRemappingListener implements KeyListener
 			// In addition to the above checks, the F-key remapping shouldn't
 			// activate when dialogs are open which listen for number keys
 			// to select options
-			if (config.fkeyRemap() && !plugin.isDialogOpen())
+			if (config.fkeyRemap()/* && !plugin.isDialogOpen() */)
 			{
 				if (config.f1().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_F1;
+					modified.put(e.getKeyCode(), KeyEvent.VK_F1);
+					e.setKeyCode(KeyEvent.VK_F1);
 				}
 				else if (config.f2().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_F2;
+					modified.put(e.getKeyCode(), KeyEvent.VK_F2);
+					e.setKeyCode(KeyEvent.VK_F2);
 				}
 				else if (config.f3().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_F3;
+					modified.put(e.getKeyCode(), KeyEvent.VK_F3);
+					e.setKeyCode(KeyEvent.VK_F3);
 				}
 				else if (config.f4().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_F4;
+					modified.put(e.getKeyCode(), KeyEvent.VK_F4);
+					e.setKeyCode(KeyEvent.VK_F4);
 				}
 				else if (config.f5().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_F5;
+					modified.put(e.getKeyCode(), KeyEvent.VK_F5);
+					e.setKeyCode(KeyEvent.VK_F5);
 				}
 				else if (config.f6().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_F6;
+					modified.put(e.getKeyCode(), KeyEvent.VK_F6);
+					e.setKeyCode(KeyEvent.VK_F6);
 				}
 				else if (config.f7().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_F7;
+					modified.put(e.getKeyCode(), KeyEvent.VK_F7);
+					e.setKeyCode(KeyEvent.VK_F7);
 				}
 				else if (config.f8().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_F8;
+					modified.put(e.getKeyCode(), KeyEvent.VK_F8);
+					e.setKeyCode(KeyEvent.VK_F8);
 				}
 				else if (config.f9().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_F9;
+					modified.put(e.getKeyCode(), KeyEvent.VK_F9);
+					e.setKeyCode(KeyEvent.VK_F9);
 				}
 				else if (config.f10().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_F10;
+					modified.put(e.getKeyCode(), KeyEvent.VK_F10);
+					e.setKeyCode(KeyEvent.VK_F10);
 				}
 				else if (config.f11().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_F11;
+					modified.put(e.getKeyCode(), KeyEvent.VK_F11);
+					e.setKeyCode(KeyEvent.VK_F11);
 				}
 				else if (config.f12().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_F12;
+					modified.put(e.getKeyCode(), KeyEvent.VK_F12);
+					e.setKeyCode(KeyEvent.VK_F12);
 				}
 				else if (config.esc().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_ESCAPE;
+					modified.put(e.getKeyCode(), KeyEvent.VK_ESCAPE);
+					e.setKeyCode(KeyEvent.VK_ESCAPE);
 				}
 			}
 

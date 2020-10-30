@@ -34,11 +34,17 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.inject.Provides;
+import java.awt.event.KeyEvent;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import javax.inject.Inject;
@@ -65,6 +71,7 @@ import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.ItemVariationMapping;
 import net.runelite.client.input.KeyManager;
+import net.runelite.client.input.MouseManager;
 import net.runelite.client.menus.MenuManager;
 import net.runelite.client.menus.WidgetMenuOption;
 import net.runelite.client.plugins.Plugin;
@@ -72,11 +79,15 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.util.Text;
 import org.apache.commons.lang3.ArrayUtils;
 
+import javax.inject.Inject;
+import java.util.List;
+import java.util.Set;
+
 @PluginDescriptor(
-	name = "Menu Entry Swapper",
-	description = "Change the default option that is displayed when hovering over objects",
-	tags = {"npcs", "inventory", "items", "objects"},
-	enabledByDefault = false
+		name = "Menu Entry Swapper",
+		description = "Change the default option that is displayed when hovering over objects",
+		tags = {"npcs", "inventory", "items", "objects"},
+		enabledByDefault = false
 )
 public class MenuEntrySwapperPlugin extends Plugin
 {
@@ -88,39 +99,46 @@ public class MenuEntrySwapperPlugin extends Plugin
 	private static final String SHIFTCLICK_CONFIG_GROUP = "shiftclick";
 	private static final String ITEM_KEY_PREFIX = "item_";
 
+	public static final String BUY_SELL_OPTION_REGEX = "(Buy|Sell) (\\d+)";
+	public static final String SET_BUY_SELL_QUANTITY_REGEX = "Set (buy|sell) quantity (\\d+)";
+	public static final String RESET_BUY_SELL_QUANTITY_REGEX = "Reset (buy|sell) quantity";
+
 	private static final WidgetMenuOption FIXED_INVENTORY_TAB_CONFIGURE = new WidgetMenuOption(CONFIGURE,
-		MENU_TARGET, WidgetInfo.FIXED_VIEWPORT_INVENTORY_TAB);
+			MENU_TARGET, WidgetInfo.FIXED_VIEWPORT_INVENTORY_TAB);
 
 	private static final WidgetMenuOption FIXED_INVENTORY_TAB_SAVE = new WidgetMenuOption(SAVE,
-		MENU_TARGET, WidgetInfo.FIXED_VIEWPORT_INVENTORY_TAB);
+			MENU_TARGET, WidgetInfo.FIXED_VIEWPORT_INVENTORY_TAB);
 
 	private static final WidgetMenuOption RESIZABLE_INVENTORY_TAB_CONFIGURE = new WidgetMenuOption(CONFIGURE,
-		MENU_TARGET, WidgetInfo.RESIZABLE_VIEWPORT_INVENTORY_TAB);
+			MENU_TARGET, WidgetInfo.RESIZABLE_VIEWPORT_INVENTORY_TAB);
 
 	private static final WidgetMenuOption RESIZABLE_INVENTORY_TAB_SAVE = new WidgetMenuOption(SAVE,
-		MENU_TARGET, WidgetInfo.RESIZABLE_VIEWPORT_INVENTORY_TAB);
+			MENU_TARGET, WidgetInfo.RESIZABLE_VIEWPORT_INVENTORY_TAB);
 
 	private static final WidgetMenuOption RESIZABLE_BOTTOM_LINE_INVENTORY_TAB_CONFIGURE = new WidgetMenuOption(CONFIGURE,
-		MENU_TARGET, WidgetInfo.RESIZABLE_VIEWPORT_BOTTOM_LINE_INVENTORY_TAB);
+			MENU_TARGET, WidgetInfo.RESIZABLE_VIEWPORT_BOTTOM_LINE_INVENTORY_TAB);
 
 	private static final WidgetMenuOption RESIZABLE_BOTTOM_LINE_INVENTORY_TAB_SAVE = new WidgetMenuOption(SAVE,
-		MENU_TARGET, WidgetInfo.RESIZABLE_VIEWPORT_BOTTOM_LINE_INVENTORY_TAB);
+			MENU_TARGET, WidgetInfo.RESIZABLE_VIEWPORT_BOTTOM_LINE_INVENTORY_TAB);
 
 	private static final Set<MenuAction> NPC_MENU_TYPES = ImmutableSet.of(
-		MenuAction.NPC_FIRST_OPTION,
-		MenuAction.NPC_SECOND_OPTION,
-		MenuAction.NPC_THIRD_OPTION,
-		MenuAction.NPC_FOURTH_OPTION,
-		MenuAction.NPC_FIFTH_OPTION,
-		MenuAction.EXAMINE_NPC);
+			MenuAction.NPC_FIRST_OPTION,
+			MenuAction.NPC_SECOND_OPTION,
+			MenuAction.NPC_THIRD_OPTION,
+			MenuAction.NPC_FOURTH_OPTION,
+			MenuAction.NPC_FIFTH_OPTION,
+			MenuAction.EXAMINE_NPC);
 
 	private static final Set<String> ESSENCE_MINE_NPCS = ImmutableSet.of(
-		"aubury",
-		"wizard sedridor",
-		"wizard distentor",
-		"wizard cromperty",
-		"brimstail"
+			"aubury",
+			"wizard sedridor",
+			"wizard distentor",
+			"wizard cromperty",
+			"brimstail"
 	);
+
+	private final Map<String, Integer> buyQuantityMap = new HashMap<>();
+	private final Map<String, Integer> sellQuantityMap = new HashMap<>();
 
 	@Inject
 	private Client client;
@@ -131,11 +149,17 @@ public class MenuEntrySwapperPlugin extends Plugin
 	@Inject
 	private MenuEntrySwapperConfig config;
 
+//	@Inject
+//	private ClickInputListener clickInputListener;
+
 	@Inject
 	private ConfigManager configManager;
 
 	@Inject
 	private KeyManager keyManager;
+
+	@Inject
+	private MouseManager mouseManager;
 
 	@Inject
 	private MenuManager menuManager;
@@ -199,7 +223,9 @@ public class MenuEntrySwapperPlugin extends Plugin
 		swap("talk-to", "fly", config::swapTravel);
 		swap("talk-to", "jatizso", config::swapTravel);
 		swap("talk-to", "neitiznot", config::swapTravel);
+		swap("travel", "dive", config::swapTravel);
 		swap("talk-to", "rellekka", config::swapTravel);
+		swap("talk-to", "island of stone", config::swapTravel);
 		swap("talk-to", "ungael", config::swapTravel);
 		swap("talk-to", "pirate's cove", config::swapTravel);
 		swap("talk-to", "waterbirth island", config::swapTravel);
@@ -216,8 +242,14 @@ public class MenuEntrySwapperPlugin extends Plugin
 		swap("talk-to", ESSENCE_MINE_NPCS::contains, "teleport", config::swapEssenceMineTeleport);
 		swap("talk-to", "collect", config::swapCollectMiscellania);
 
-		swap("leave tomb", "quick-leave", config::swapQuickLeave);
-		swap("tomb door", "quick-leave", config::swapQuickLeave);
+		swap("message", "delete", () -> {
+//			System.out.println("shiftmodifer: " + shiftModifier());
+			return shiftModifier();
+		});
+
+//		swap("deposit-all", "fill", () -> true); // doesn't work I don't think.
+//		swap("fill", "empty", () -> true);
+		swap("open", "rune pouch", "empty", () -> shiftModifier());
 
 		swap("pass", "energy barrier", "pay-toll(2-ecto)", config::swapTravel);
 		swap("open", "gate", "pay-toll(10gp)", config::swapTravel);
@@ -238,15 +270,22 @@ public class MenuEntrySwapperPlugin extends Plugin
 		swap("view", "add-house", () -> config.swapHouseAdvertisement() == HouseAdvertisementMode.ADD_HOUSE);
 		swap("view", "visit-last", () -> config.swapHouseAdvertisement() == HouseAdvertisementMode.VISIT_LAST);
 
-		for (String option : new String[]{"zanaris", "tree"})
+		for (String option : new String[]{"zanaris", "configure", "tree"})
 		{
-			swapContains(option, alwaysTrue(), "last-destination", () -> config.swapFairyRing() == FairyRingMode.LAST_DESTINATION);
-			swapContains(option, alwaysTrue(), "configure", () -> config.swapFairyRing() == FairyRingMode.CONFIGURE);
+			swapContains(option, alwaysTrue(), "zanaris", () -> client.isKeyPressed(KeyCode.KC_Z));
+			swapContains(option, alwaysTrue(), "last-destination", () -> (config.swapFairyRing() == FairyRingMode.LAST_DESTINATION ^ shiftModifier()) && !client.isKeyPressed(KeyCode.KC_T) && !client.isKeyPressed(KeyCode.KC_Z));
+			swapContains(option, alwaysTrue(), "configure", () -> (config.swapFairyRing() == FairyRingMode.CONFIGURE ^ shiftModifier()) && !client.isKeyPressed(KeyCode.KC_T) && !client.isKeyPressed(KeyCode.KC_Z));
 		}
 
-		swapContains("configure", alwaysTrue(), "last-destination", () ->
-			config.swapFairyRing() == FairyRingMode.LAST_DESTINATION || config.swapFairyRing() == FairyRingMode.ZANARIS);
+		// order matters here.
+		swapContains("venerate", alwaysTrue(), "ancient", () -> client.isKeyPressed(KeyCode.KC_C));
+		swapContains("venerate", alwaysTrue(), "arceuus", () -> client.isKeyPressed(KeyCode.KC_R));
+		swapContains("venerate", alwaysTrue(), "standard", () -> true);
+		swapContains("venerate", alwaysTrue(), "lunar", () -> true);
+
 		swapContains("tree", alwaysTrue(), "zanaris", () -> config.swapFairyRing() == FairyRingMode.ZANARIS);
+
+		swap("fill", "coal bag", "empty", () -> true);
 
 		swap("check", "reset", config::swapBoxTrap);
 		swap("dismantle", "reset", config::swapBoxTrap);
@@ -270,32 +309,32 @@ public class MenuEntrySwapperPlugin extends Plugin
 		swap("admire", "spellbook", config::swapAdmire);
 		swap("admire", "perks", config::swapAdmire);
 
-		swap("teleport menu", "duel arena", config::swapJewelleryBox);
-		swap("teleport menu", "castle wars", config::swapJewelleryBox);
-		swap("teleport menu", "ferox enclave", config::swapJewelleryBox);
-		swap("teleport menu", "burthorpe", config::swapJewelleryBox);
-		swap("teleport menu", "barbarian outpost", config::swapJewelleryBox);
-		swap("teleport menu", "corporeal beast", config::swapJewelleryBox);
-		swap("teleport menu", "tears of guthix", config::swapJewelleryBox);
-		swap("teleport menu", "wintertodt camp", config::swapJewelleryBox);
-		swap("teleport menu", "warriors' guild", config::swapJewelleryBox);
-		swap("teleport menu", "champions' guild", config::swapJewelleryBox);
-		swap("teleport menu", "monastery", config::swapJewelleryBox);
-		swap("teleport menu", "ranging guild", config::swapJewelleryBox);
-		swap("teleport menu", "fishing guild", config::swapJewelleryBox);
-		swap("teleport menu", "mining guild", config::swapJewelleryBox);
-		swap("teleport menu", "crafting guild", config::swapJewelleryBox);
-		swap("teleport menu", "cooking guild", config::swapJewelleryBox);
-		swap("teleport menu", "woodcutting guild", config::swapJewelleryBox);
-		swap("teleport menu", "farming guild", config::swapJewelleryBox);
-		swap("teleport menu", "miscellania", config::swapJewelleryBox);
-		swap("teleport menu", "grand exchange", config::swapJewelleryBox);
-		swap("teleport menu", "falador park", config::swapJewelleryBox);
-		swap("teleport menu", "dondakan's rock", config::swapJewelleryBox);
-		swap("teleport menu", "edgeville", config::swapJewelleryBox);
-		swap("teleport menu", "karamja", config::swapJewelleryBox);
-		swap("teleport menu", "draynor village", config::swapJewelleryBox);
-		swap("teleport menu", "al kharid", config::swapJewelleryBox);
+		swap("teleport menu", "duel arena", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "castle wars", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "ferox enclave", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "burthorpe", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "barbarian outpost", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "corporeal beast", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "tears of guthix", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "wintertodt camp", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "warriors' guild", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "champions' guild", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "monastery", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "ranging guild", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "fishing guild", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "mining guild", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "crafting guild", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "cooking guild", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "woodcutting guild", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "farming guild", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "miscellania", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "grand exchange", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "falador park", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "dondakan's rock", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "edgeville", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "karamja", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "draynor village", () -> config.swapJewelleryBox() ^ shiftModifier());
+		swap("teleport menu", "al kharid", () -> config.swapJewelleryBox() ^ shiftModifier());
 
 		swap("shared", "private", config::swapPrivate);
 
@@ -304,28 +343,42 @@ public class MenuEntrySwapperPlugin extends Plugin
 		swap("view offer", "abort offer", () -> shiftModifier() && config.swapGEAbort());
 
 		Arrays.asList(
-			"honest jimmy", "bert the sandman", "advisor ghrim", "dark mage", "lanthus", "turael", "mazchna", "vannaka",
-			"chaeldar", "nieve", "steve", "duradel", "krystilia", "konar", "murphy", "cyrisus", "smoggy", "ginea", "watson",
-			"barbarian guard", "amy", "random"
+				"honest jimmy", "bert the sandman", "advisor ghrim", "dark mage", "lanthus", "turael", "mazchna", "vannaka",
+				"chaeldar", "nieve", "steve", "duradel", "krystilia", "konar", "murphy", "cyrisus", "smoggy", "ginea", "watson",
+				"barbarian guard", "amy", "random"
 		).forEach(npc -> swap("cast", "npc contact", npc, () -> shiftModifier() && config.swapNpcContact()));
 
-		swap("value", "buy 1", () -> shiftModifier() && config.shopBuy() == BuyMode.BUY_1);
-		swap("value", "buy 5", () -> shiftModifier() && config.shopBuy() == BuyMode.BUY_5);
-		swap("value", "buy 10", () -> shiftModifier() && config.shopBuy() == BuyMode.BUY_10);
-		swap("value", "buy 50", () -> shiftModifier() && config.shopBuy() == BuyMode.BUY_50);
+		swap("value", target -> (target == null) ? false : buyQuantityMap.getOrDefault(target, -1) == 1, "buy 1", () -> true);
+		swap("value", target -> (target == null) ? false : buyQuantityMap.getOrDefault(target, -1) == 5, "buy 5", () -> true);
+		swap("value", target -> (target == null) ? false : buyQuantityMap.getOrDefault(target, -1) == 10, "buy 10", () -> true);
+		swap("value", target -> (target == null) ? false : buyQuantityMap.getOrDefault(target, -1) == 50, "buy 50", () -> true);
 
-		swap("value", "sell 1", () -> shiftModifier() && config.shopSell() == SellMode.SELL_1);
-		swap("value", "sell 5", () -> shiftModifier() && config.shopSell() == SellMode.SELL_5);
-		swap("value", "sell 10", () -> shiftModifier() && config.shopSell() == SellMode.SELL_10);
-		swap("value", "sell 50", () -> shiftModifier() && config.shopSell() == SellMode.SELL_50);
+		swap("value", target -> (target == null) ? false : sellQuantityMap.getOrDefault(target, -1) == 1, "sell 1", () -> true);
+		swap("value", target -> (target == null) ? false : sellQuantityMap.getOrDefault(target, -1) == 5, "sell 5", () -> true);
+		swap("value", target -> (target == null) ? false : sellQuantityMap.getOrDefault(target, -1) == 10, "sell 10", () -> true);
+		swap("value", target -> (target == null) ? false : sellQuantityMap.getOrDefault(target, -1) == 50, "sell 50", () -> true);
 
-		swap("wear", "rub", config::swapTeleportItem);
-		swap("wear", "teleport", config::swapTeleportItem);
-		swap("wield", "teleport", config::swapTeleportItem);
+		swap("wear", "rub", () -> {
+			boolean result = shiftModifier() ^ config.swapTeleportItem();
+//			System.out.println(shiftModifier() + " " + config.swapTeleportItem() + " " + result);
+//			new Exception().printStackTrace(System.out);
+			return result;
+		});
+		swap("wear", "teleport", () -> {
+//			System.out.println("shiftmodifier is " + shiftModifier());
+			return shiftModifier() ^ config.swapTeleportItem();
+		});
+		swap("wield", "teleport", () -> shiftModifier() ^ config.swapTeleportItem());
+
+		swap("climb", "climb-up", () -> !shiftModifier());
+		swap("climb", "climb-down", () -> shiftModifier());
+//		swap("open", "pick-lock", () -> true);
+		swap("open", "search for traps", () -> true);
 
 		swap("bury", "use", config::swapBones);
 
-		swap("clean", "use", config::swapHerbs);
+//		swap("clean", "use", config::swapHerbs);
+		swap("clean", target -> !(target.contains("buchu") || target.contains("golpar") || target.contains("noxifer")), "use", config::swapHerbs);
 
 		swap("collect-note", "collect-item", () -> config.swapGEItemCollect() == GEItemCollectMode.ITEMS);
 		swap("collect-notes", "collect-items", () -> config.swapGEItemCollect() == GEItemCollectMode.ITEMS);
@@ -426,6 +479,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 
 	private void enableCustomization()
 	{
+//		mouseManager.registerMouseListener(clickInputListener);
 		refreshShiftClickCustomizationMenus();
 		// set shift click action index on the item compositions
 		clientThread.invoke(this::resetItemCompositionCache);
@@ -433,6 +487,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 
 	private void disableCustomization()
 	{
+//		mouseManager.unregisterMouseListener(clickInputListener);
 		removeShiftClickCustomizationMenus();
 		configuringShiftClick = false;
 		// flush item compositions to reset the shift click action index
@@ -443,8 +498,8 @@ public class MenuEntrySwapperPlugin extends Plugin
 	public void onWidgetMenuOptionClicked(WidgetMenuOptionClicked event)
 	{
 		if (event.getWidget() == WidgetInfo.FIXED_VIEWPORT_INVENTORY_TAB
-			|| event.getWidget() == WidgetInfo.RESIZABLE_VIEWPORT_INVENTORY_TAB
-			|| event.getWidget() == WidgetInfo.RESIZABLE_VIEWPORT_BOTTOM_LINE_INVENTORY_TAB)
+				|| event.getWidget() == WidgetInfo.RESIZABLE_VIEWPORT_INVENTORY_TAB
+				|| event.getWidget() == WidgetInfo.RESIZABLE_VIEWPORT_BOTTOM_LINE_INVENTORY_TAB)
 		{
 			configuringShiftClick = event.getMenuOption().equals(CONFIGURE) && Text.removeTags(event.getMenuTarget()).equals(MENU_TARGET);
 			refreshShiftClickCustomizationMenus();
@@ -515,47 +570,148 @@ public class MenuEntrySwapperPlugin extends Plugin
 	@Subscribe
 	public void onMenuEntryAdded(MenuEntryAdded menuEntryAdded)
 	{
+//		System.out.println(menuEntryAdded.getOption() + " " + menuEntryAdded.getTarget() + " " + menuEntryAdded.getType() + " " + menuEntryAdded.getActionParam0() + " " + menuEntryAdded.getActionParam1() + " " + menuEntryAdded.getIdentifier());
+		// 1007 is in bank.
+		if (shiftModifier()) swapBuySell(menuEntryAdded);
+
 		// This swap needs to happen prior to drag start on click, which happens during
 		// widget ticking and prior to our client tick event. This is because drag start
 		// is what builds the context menu row which is what the eventual click will use
 
+		ShiftDepositMode depositMode = ShiftDepositMode.OFF;
+		ShiftWithdrawMode withdrawMode = ShiftWithdrawMode.OFF;
+
+//		for (int i = 0; i < 112; i++)
+//		{
+//			if (client.isKeyPressed(i))
+//				System.out.println("key pressed: " + i);
+//		}
+
+		if (client.isKeyPressed(KeyCode.KC_X))
+		{
+			depositMode = ShiftDepositMode.DEPOSIT_X;
+			withdrawMode = ShiftWithdrawMode.WITHDRAW_X;
+		}
+		else if (client.isKeyPressed(KeyCode.KC_C))
+		{
+			depositMode = ShiftDepositMode.DEPOSIT_SET_X;
+			withdrawMode = ShiftWithdrawMode.WITHDRAW_SET_X;
+		}
+		else if (client.isKeyPressed(KeyCode.KC_F))
+		{
+			int noModSetting = client.getVarbitValue(6590); // 0 is 1, 1 is 5, 2 is 10, 3 is x, 4 is All.
+
+			if (noModSetting == 4) {
+				depositMode = ShiftDepositMode.DEPOSIT_1;
+				withdrawMode = ShiftWithdrawMode.WITHDRAW_1;
+			} else {
+				depositMode = ShiftDepositMode.DEPOSIT_ALL;
+				withdrawMode = ShiftWithdrawMode.WITHDRAW_ALL;
+			}
+		}
+		else if (client.isKeyPressed(KeyCode.KC_T))
+		{
+			depositMode = ShiftDepositMode.DEPOSIT_10;
+			withdrawMode = ShiftWithdrawMode.WITHDRAW_10;
+		}
+		else if (shiftModifier())
+		{
+			// if client is set to 1 and plugin is set to 1, shift should be All.
+			// if client is set to something and plugin is set to the same thing, shift should be 1.
+			depositMode = config.bankDepositShiftClick();
+			withdrawMode = config.bankWithdrawShiftClick();
+		}
+
+		if (menuEntryAdded.getTarget().contains("Bucket of sand"))
+		{
+			withdrawMode = ShiftWithdrawMode.WITHDRAW_X;
+		} else if (menuEntryAdded.getTarget().contains("Coal bag")) {
+			depositMode = ShiftDepositMode.EXTRA_OP;
+		} else if (menuEntryAdded.getTarget().contains("pouch") && !menuEntryAdded.getTarget().toLowerCase().contains("rune")) {
+			depositMode = ShiftDepositMode.EXTRA_OP;
+		}
+
 		// Swap to shift-click deposit behavior
 		// Deposit- op 1 is the current withdraw amount 1/5/10/x for deposit box interface and chambers of xeric storage unit.
 		// Deposit- op 2 is the current withdraw amount 1/5/10/x for bank interface
-		if (shiftModifier() && config.bankDepositShiftClick() != ShiftDepositMode.OFF
-			&& menuEntryAdded.getType() == MenuAction.CC_OP.getId()
-			&& (menuEntryAdded.getIdentifier() == 2 || menuEntryAdded.getIdentifier() == 1)
-			&& (menuEntryAdded.getOption().startsWith("Deposit-") || menuEntryAdded.getOption().startsWith("Store") || menuEntryAdded.getOption().startsWith("Donate")))
+
+		final int widgetGroupId = WidgetInfo.TO_GROUP(menuEntryAdded.getActionParam1());
+
+		if (depositMode != ShiftDepositMode.OFF
+				&& menuEntryAdded.getType() == MenuAction.CC_OP.getId()
+				&& (menuEntryAdded.getIdentifier() == 2 || menuEntryAdded.getIdentifier() == 1)
+				&& (menuEntryAdded.getOption().startsWith("Deposit-") || menuEntryAdded.getOption().startsWith("Store") || menuEntryAdded.getOption().startsWith("Donate")))
 		{
-			ShiftDepositMode shiftDepositMode = config.bankDepositShiftClick();
-			final int widgetGroupId = WidgetInfo.TO_GROUP(menuEntryAdded.getActionParam1());
-			final int opId = widgetGroupId == WidgetID.DEPOSIT_BOX_GROUP_ID ? shiftDepositMode.getIdentifierDepositBox()
-				: widgetGroupId == WidgetID.CHAMBERS_OF_XERIC_STORAGE_UNIT_INVENTORY_GROUP_ID ? shiftDepositMode.getIdentifierChambersStorageUnit()
-				: shiftDepositMode.getIdentifier();
+			final int opId = widgetGroupId == WidgetID.DEPOSIT_BOX_GROUP_ID ? depositMode.getIdentifierDepositBox()
+					: widgetGroupId == WidgetID.CHAMBERS_OF_XERIC_STORAGE_UNIT_INVENTORY_GROUP_ID ? depositMode.getIdentifierChambersStorageUnit()
+					: depositMode.getIdentifier();
 			final int actionId = opId >= 6 ? MenuAction.CC_OP_LOW_PRIORITY.getId() : MenuAction.CC_OP.getId();
 			bankModeSwap(actionId, opId);
 		}
 
 		// Swap to shift-click withdraw behavior
 		// Deposit- op 1 is the current withdraw amount 1/5/10/x
-		if (shiftModifier() && config.bankWithdrawShiftClick() != ShiftWithdrawMode.OFF
-			&& menuEntryAdded.getType() == MenuAction.CC_OP.getId() && menuEntryAdded.getIdentifier() == 1
-			&& menuEntryAdded.getOption().startsWith("Withdraw"))
+		if (withdrawMode != ShiftWithdrawMode.OFF
+				&& menuEntryAdded.getType() == MenuAction.CC_OP.getId() && menuEntryAdded.getIdentifier() == 1
+				&& menuEntryAdded.getOption().startsWith("Withdraw"))
 		{
-			ShiftWithdrawMode shiftWithdrawMode = config.bankWithdrawShiftClick();
-			final int widgetGroupId = WidgetInfo.TO_GROUP(menuEntryAdded.getActionParam1());
-			final int actionId, opId;
-			if (widgetGroupId == WidgetID.CHAMBERS_OF_XERIC_STORAGE_UNIT_PRIVATE_GROUP_ID || widgetGroupId == WidgetID.CHAMBERS_OF_XERIC_STORAGE_UNIT_SHARED_GROUP_ID)
-			{
-				actionId = MenuAction.CC_OP.getId();
-				opId = shiftWithdrawMode.getIdentifierChambersStorageUnit();
-			}
-			else
-			{
-				actionId = shiftWithdrawMode.getMenuAction().getId();
-				opId = shiftWithdrawMode.getIdentifier();
-			}
+			boolean isChambersStorageUnit = widgetGroupId == WidgetID.CHAMBERS_OF_XERIC_STORAGE_UNIT_PRIVATE_GROUP_ID || widgetGroupId == WidgetID.CHAMBERS_OF_XERIC_STORAGE_UNIT_SHARED_GROUP_ID;
+			final int actionId = isChambersStorageUnit ? MenuAction.CC_OP.getId()
+					: withdrawMode.getMenuAction().getId();
+			final int opId = isChambersStorageUnit ? withdrawMode.getIdentifierChambersStorageUnit()
+					: withdrawMode.getIdentifier();
+//			final int opId = WidgetInfo.TO_GROUP(
+//				menuEntryAdded.getActionParam1()) == WidgetID.SEED_VAULT_GROUP_ID
+//				? withdrawMode.getIdentifierSeedVault()
+//				: withdrawMode.getIdentifier();
+//			int actionId = withdrawMode.getMenuAction().getId();
+//			System.out.println("withdraw (1) option: " + menuEntryAdded.getOption() + " " + opId + " " + actionId);
+//			if (WidgetInfo.TO_GROUP(menuEntryAdded.getActionParam1()) == WidgetID.SEED_VAULT_GROUP_ID && opId == 5)
+//			{
+//				actionId = MenuAction.CC_OP.getId();
+//			}
 			bankModeSwap(actionId, opId);
+		}
+	}
+
+	private void swapBuySell(MenuEntryAdded menuEntryAdded)
+	{
+		String option = Text.removeTags(menuEntryAdded.getOption());
+
+		if (option.matches(BUY_SELL_OPTION_REGEX))
+		{
+			Matcher matcher = Pattern.compile(BUY_SELL_OPTION_REGEX).matcher(option);
+			matcher.matches();
+			String operation = matcher.group(1);
+			int quantity = Integer.valueOf(matcher.group(2));
+
+			MenuEntry[] menuEntries = client.getMenuEntries();
+			MenuEntry setQuantityEntry = new MenuEntry();
+			setQuantityEntry.setOption("Set " + operation.toLowerCase() + " quantity " + quantity);
+			setQuantityEntry.setTarget(menuEntryAdded.getTarget());
+			setQuantityEntry.setType(MenuAction.RUNELITE.getId());
+			menuEntries[menuEntries.length - 1] = setQuantityEntry;
+			client.setMenuEntries(menuEntries);
+		}
+		else if ("Value".equals(option))
+		{
+			MenuEntry[] menuEntries = client.getMenuEntries();
+			// Search for Buy or Sell menu entry to figure out if we are in a buy or sell menu.
+			for (int i = 0; i < menuEntries.length; i++)
+			{
+				Matcher matcher = Pattern.compile(SET_BUY_SELL_QUANTITY_REGEX).matcher(Text.removeTags(menuEntries[i].getOption()));
+				if (matcher.matches())
+				{
+					String operation = matcher.group(1);
+					MenuEntry resetQuantityEntry = new MenuEntry();
+					resetQuantityEntry.setOption("Reset " + operation + " quantity");
+					resetQuantityEntry.setTarget(menuEntryAdded.getTarget());
+					resetQuantityEntry.setType(MenuAction.RUNELITE.getId());
+					menuEntries[menuEntries.length - 1] = resetQuantityEntry;
+					client.setMenuEntries(menuEntries);
+					break;
+				}
+			}
 		}
 	}
 
@@ -584,48 +740,74 @@ public class MenuEntrySwapperPlugin extends Plugin
 	@Subscribe
 	public void onMenuOptionClicked(MenuOptionClicked event)
 	{
-		if (event.getMenuAction() != MenuAction.RUNELITE || event.getWidgetId() != WidgetInfo.INVENTORY.getId())
+	    System.out.println(System.currentTimeMillis() + ", onMenuOptionClicked" + event.getMenuOption() + ", " + event.getMenuAction() + ", " + event.getMenuTarget() + " " + event.getId() + " " + event.getMenuAction());
+//	    MyLog.menuOptionClicked(event.getMenuOption() + " " + event.getMenuTarget());
+		if (event.getMenuAction() != MenuAction.RUNELITE)
 		{
 			return;
 		}
 
-		int itemId = event.getId();
-
-		if (itemId == -1)
+		if (event.getWidgetId() == WidgetInfo.INVENTORY.getId())
 		{
-			return;
-		}
+			int itemId = event.getId();
 
-		String option = event.getMenuOption();
-		String target = event.getMenuTarget();
-		ItemComposition itemComposition = client.getItemDefinition(itemId);
-
-		if (option.equals(RESET) && target.equals(MENU_TARGET))
-		{
-			unsetSwapConfig(itemId);
-			return;
-		}
-
-		if (!itemComposition.getName().equals(Text.removeTags(target)))
-		{
-			return;
-		}
-
-		if (option.equals("Use")) //because "Use" is not in inventoryActions
-		{
-			setSwapConfig(itemId, -1);
-		}
-		else
-		{
-			String[] inventoryActions = itemComposition.getInventoryActions();
-
-			for (int index = 0; index < inventoryActions.length; index++)
+			if (itemId == -1)
 			{
-				if (option.equals(inventoryActions[index]))
+				return;
+			}
+
+			String option = event.getMenuOption();
+			String target = event.getMenuTarget();
+			ItemComposition itemComposition = client.getItemDefinition(itemId);
+
+			if (option.equals(RESET) && target.equals(MENU_TARGET))
+			{
+				unsetSwapConfig(itemId);
+				return;
+			}
+
+			if (!itemComposition.getName().equals(Text.removeTags(target)))
+			{
+				return;
+			}
+
+			if (option.equals("Use")) //because "Use" is not in inventoryActions
+			{
+				setSwapConfig(itemId, -1);
+			}
+			else
+			{
+				String[] inventoryActions = itemComposition.getInventoryActions();
+
+				for (int index = 0; index < inventoryActions.length; index++)
 				{
-					setSwapConfig(itemId, index);
-					break;
+					if (option.equals(inventoryActions[index]))
+					{
+						setSwapConfig(itemId, index);
+						break;
+					}
 				}
+			}
+		}
+		else if (event.getMenuOption().matches(SET_BUY_SELL_QUANTITY_REGEX))
+		{
+			Matcher matcher = Pattern.compile(SET_BUY_SELL_QUANTITY_REGEX).matcher(event.getMenuOption());
+			if (matcher.matches())
+			{
+				String operation = matcher.group(1);
+				int quantity = Integer.valueOf(matcher.group(2));
+				System.out.println("here");
+				(("buy".equals(operation)) ? buyQuantityMap : sellQuantityMap).put(Text.removeTags(event.getMenuTarget()).toLowerCase(), quantity);
+			}
+		}
+		else if (event.getMenuOption().matches(RESET_BUY_SELL_QUANTITY_REGEX))
+		{
+			Matcher matcher = Pattern.compile(RESET_BUY_SELL_QUANTITY_REGEX).matcher(event.getMenuOption());
+			if (matcher.matches())
+			{
+				String operation = matcher.group(1);
+				System.out.println("here");
+				(("buy".equals(operation)) ? buyQuantityMap : sellQuantityMap).remove(Text.removeTags(event.getMenuTarget()).toLowerCase());
 			}
 		}
 	}
@@ -639,18 +821,18 @@ public class MenuEntrySwapperPlugin extends Plugin
 		final NPC hintArrowNpc = client.getHintArrowNpc();
 
 		if (hintArrowNpc != null
-			&& hintArrowNpc.getIndex() == eventId
-			&& NPC_MENU_TYPES.contains(menuAction))
+				&& hintArrowNpc.getIndex() == eventId
+				&& NPC_MENU_TYPES.contains(menuAction))
 		{
 			return;
 		}
 
 		if (shiftModifier() && (menuAction == MenuAction.ITEM_FIRST_OPTION
-			|| menuAction == MenuAction.ITEM_SECOND_OPTION
-			|| menuAction == MenuAction.ITEM_THIRD_OPTION
-			|| menuAction == MenuAction.ITEM_FOURTH_OPTION
-			|| menuAction == MenuAction.ITEM_FIFTH_OPTION
-			|| menuAction == MenuAction.ITEM_USE))
+				|| menuAction == MenuAction.ITEM_SECOND_OPTION
+				|| menuAction == MenuAction.ITEM_THIRD_OPTION
+				|| menuAction == MenuAction.ITEM_FOURTH_OPTION
+				|| menuAction == MenuAction.ITEM_FIFTH_OPTION
+				|| menuAction == MenuAction.ITEM_USE))
 		{
 			// Special case use shift click due to items not actually containing a "Use" option, making
 			// the client unable to perform the swap itself.
@@ -699,6 +881,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 		optionIndexes.clear();
 		for (MenuEntry entry : menuEntries)
 		{
+			System.out.println("menu entry is " + entry.getTarget());
 			String option = Text.removeTags(entry.getOption()).toLowerCase();
 			optionIndexes.put(option, idx++);
 		}
@@ -750,7 +933,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 	{
 		if (strict)
 		{
-			List<Integer> indexes = optionIndexes.get(option);
+			List<Integer> indexes = optionIndexes.get(option.toLowerCase());
 
 			// We want the last index which matches the target, as that is what is top-most
 			// on the menu
@@ -790,7 +973,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 	private void swap(ArrayListMultimap<String, Integer> optionIndexes, MenuEntry[] entries, int index1, int index2)
 	{
 		MenuEntry entry1 = entries[index1],
-			entry2 = entries[index2];
+				entry2 = entries[index2];
 
 		entries[index1] = entry2;
 		entries[index2] = entry1;
@@ -799,10 +982,10 @@ public class MenuEntrySwapperPlugin extends Plugin
 
 		// Update optionIndexes
 		String option1 = Text.removeTags(entry1.getOption()).toLowerCase(),
-			option2 = Text.removeTags(entry2.getOption()).toLowerCase();
+				option2 = Text.removeTags(entry2.getOption()).toLowerCase();
 
 		List<Integer> list1 = optionIndexes.get(option1),
-			list2 = optionIndexes.get(option2);
+				list2 = optionIndexes.get(option2);
 
 		// call remove(Object) instead of remove(int)
 		list1.remove((Integer) index1);

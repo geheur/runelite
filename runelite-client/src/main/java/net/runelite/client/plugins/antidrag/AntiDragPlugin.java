@@ -24,13 +24,16 @@
  */
 package net.runelite.client.plugins.antidrag;
 
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Provides;
 import java.awt.event.KeyEvent;
+import java.util.List;
 import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.Varbits;
 import net.runelite.api.events.FocusChanged;
+import net.runelite.api.events.GameTick;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.widgets.Widget;
@@ -56,6 +59,26 @@ public class AntiDragPlugin extends Plugin implements KeyListener
 	static final String CONFIG_GROUP = "antiDrag";
 
 	private static final int DEFAULT_DELAY = 5;
+
+	// list of item containers to apply anti drag to.
+	private static final List<WidgetInfo> itemContainers = ImmutableList.of(
+			WidgetInfo.BANK_ITEM_CONTAINER,
+			WidgetInfo.BANK_INVENTORY_ITEMS_CONTAINER,
+			WidgetInfo.DEPOSIT_BOX_INVENTORY_ITEMS_CONTAINER,
+			WidgetInfo.BANK_INVENTORY_EQUIPMENT_SCREEN_ITEMS_CONTAINER,
+			WidgetInfo.CHAMBERS_OF_XERIC_PRIVATE_STORAGE,
+			WidgetInfo.CHAMBERS_OF_XERIC_INVENTORY_STORAGE,
+			WidgetInfo.SEED_VAULT_ITEM_CONTAINER
+	);
+
+	// list of group ids that when loaded indicate that an item container that should have anti drag on it may have
+	// loaded.
+	private static final List<Integer> widgetLoadedGroupIds = ImmutableList.of(
+			WidgetID.BANK_GROUP_ID,
+			WidgetID.DEPOSIT_BOX_GROUP_ID,
+			WidgetID.CHAMBERS_OF_XERIC_STORAGE_UNIT_INVENTORY_GROUP_ID,
+			WidgetID.SEED_VAULT_GROUP_ID
+	);
 
 	@Inject
 	private Client client;
@@ -201,39 +224,57 @@ public class AntiDragPlugin extends Plugin implements KeyListener
 	@Subscribe
 	public void onWidgetLoaded(WidgetLoaded widgetLoaded)
 	{
-		if ((widgetLoaded.getGroupId() == WidgetID.BANK_GROUP_ID || widgetLoaded.getGroupId() == WidgetID.DEPOSIT_BOX_GROUP_ID) && (!config.onShiftOnly() || shiftHeld) && !ctrlHeld)
+		if (widgetLoadedGroupIds.contains(widgetLoaded.getGroupId()) && (!config.onShiftOnly() || shiftHeld) && !ctrlHeld)
 		{
-			setBankDragDelay(config.dragDelay());
+			setNonInventoryDragDelays(config.dragDelay());
 		}
 	}
 
-	private void setBankDragDelay(int delay)
+	@Subscribe
+	public void onGameTick(GameTick gameTick)
 	{
-		final Widget bankItemContainer = client.getWidget(WidgetInfo.BANK_ITEM_CONTAINER);
-		final Widget bankInventoryItemsContainer = client.getWidget(WidgetInfo.BANK_INVENTORY_ITEMS_CONTAINER);
-		final Widget bankDepositContainer = client.getWidget(WidgetInfo.DEPOSIT_BOX_INVENTORY_ITEMS_CONTAINER);
-		if (bankItemContainer != null)
+		// The seed vault seems to reset its drag delay every time it opens, and setting the drag delays in
+		// onWidgetHiddenChanged didn't work to fix this. So, set it back every tick.
+		int delay = ((config.onShiftOnly() && !shiftHeld) || ctrlHeld) ? DEFAULT_DELAY : config.dragDelay();
+		Widget itemContainer = client.getWidget(WidgetInfo.SEED_VAULT_ITEM_CONTAINER);
+		if (itemContainer != null)
 		{
-			Widget[] items = bankItemContainer.getDynamicChildren();
-			for (Widget item : items)
+			Widget[] items = itemContainer.getDynamicChildren();
+			if (items.length >= 1 && items[0].getDragDeadTime() != delay)
 			{
-				item.setDragDeadTime(delay);
+				for (Widget item : items)
+				{
+					item.setDragDeadTime(delay);
+				}
 			}
 		}
-		if (bankInventoryItemsContainer != null)
+
+		itemContainer = client.getWidget(WidgetInfo.CHAMBERS_OF_XERIC_PRIVATE_STORAGE);
+		if (itemContainer != null)
 		{
-			Widget[] items = bankInventoryItemsContainer.getDynamicChildren();
-			for (Widget item : items)
+			Widget[] items = itemContainer.getDynamicChildren();
+			if (items.length >= 1 && items[0].getDragDeadTime() != delay)
 			{
-				item.setDragDeadTime(delay);
+				for (Widget item : items)
+				{
+					item.setDragDeadTime(delay);
+				}
 			}
 		}
-		if (bankDepositContainer != null)
+	}
+
+	private void setNonInventoryDragDelays(int delay)
+	{
+		for (WidgetInfo itemContainerInfo : itemContainers)
 		{
-			Widget[] items = bankDepositContainer.getDynamicChildren();
-			for (Widget item : items)
+			final Widget itemContainer = client.getWidget(itemContainerInfo);
+			if (itemContainer != null)
 			{
-				item.setDragDeadTime(delay);
+				Widget[] items = itemContainer.getDynamicChildren();
+				for (Widget item : items)
+				{
+					item.setDragDeadTime(delay);
+				}
 			}
 		}
 	}
@@ -241,13 +282,13 @@ public class AntiDragPlugin extends Plugin implements KeyListener
 	private void setDragDelay()
 	{
 		client.setInventoryDragDelay(config.dragDelay());
-		setBankDragDelay(config.dragDelay());
+		setNonInventoryDragDelays(config.dragDelay());
 	}
 
 	private void resetDragDelay()
 	{
 		client.setInventoryDragDelay(DEFAULT_DELAY);
-		setBankDragDelay(DEFAULT_DELAY);
+		setNonInventoryDragDelays(DEFAULT_DELAY);
 	}
 
 }

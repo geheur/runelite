@@ -234,4 +234,6 @@ public final class AnimationID
 
 	// POH Animations
 	public static final int INCENSE_BURNER = 3687;
+
+	public static final int BLOWPIPE_ATTACK_ANIMATION = 5061;
 }

@@ -148,7 +148,8 @@ public class RuneLiteAPI
 
 	public static String getVersion()
 	{
-		return version;
+	    return "1.6.28";
+//		return version;
 	}
 
 	public static void setVersion(String version)
