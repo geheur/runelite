@@ -654,11 +654,9 @@ public class WorldHopperPlugin extends Plugin
 	@Subscribe
 	public void onCommandExecuted(CommandExecuted commandExecuted)
 	{
-		String[] args = commandExecuted.getArguments();
-
 		if ("hop".equals(commandExecuted.getCommand()))
 		{
-			int desiredWorld = Integer.parseInt(args[0]);
+            int desiredWorld = Integer.parseInt(commandExecuted.getArguments()[0]);
 			hop(desiredWorld);
 		}
 	}
