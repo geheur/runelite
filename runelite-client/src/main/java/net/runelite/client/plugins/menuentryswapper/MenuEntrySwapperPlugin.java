@@ -210,6 +210,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 		swap("talk-to", "help", config::swapHelp);
 		swap("talk-to", "nets", config::swapNets);
 		swap("talk-to", "repairs", config::swapDarkMage);
+		swap("talk-to", "buy-plank", () -> true);
 		// make sure assignment swap is higher priority than trade swap for slayer masters
 		swap("talk-to", "assignment", config::swapAssignment);
 		swap("talk-to", "trade", config::swapTrade);
@@ -262,6 +263,9 @@ public class MenuEntrySwapperPlugin extends Plugin
 		swap("cage", "harpoon", config::swapHarpoon);
 		swap("big net", "harpoon", config::swapHarpoon);
 		swap("net", "harpoon", config::swapHarpoon);
+
+		swap("wear", "ver sinhaza", () -> true);
+		swap("open (normal)", "open (private)", () -> true);
 
 		swap("enter", "portal", "home", () -> config.swapHomePortal() == HouseMode.HOME);
 		swap("enter", "portal", "build mode", () -> config.swapHomePortal() == HouseMode.BUILD_MODE);
@@ -740,7 +744,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 	@Subscribe
 	public void onMenuOptionClicked(MenuOptionClicked event)
 	{
-	    System.out.println(System.currentTimeMillis() + ", onMenuOptionClicked" + event.getMenuOption() + ", " + event.getMenuAction() + ", " + event.getMenuTarget() + " " + event.getId() + " " + event.getMenuAction());
+//	    System.out.println(System.currentTimeMillis() + ", onMenuOptionClicked" + event.getMenuOption() + ", " + event.getMenuAction() + ", " + event.getMenuTarget() + " " + event.getId() + " " + event.getMenuAction());
 //	    MyLog.menuOptionClicked(event.getMenuOption() + " " + event.getMenuTarget());
 		if (event.getMenuAction() != MenuAction.RUNELITE)
 		{
@@ -881,7 +885,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 		optionIndexes.clear();
 		for (MenuEntry entry : menuEntries)
 		{
-			System.out.println("menu entry is " + entry.getTarget());
+//			System.out.println("menu entry is " + entry.getTarget());
 			String option = Text.removeTags(entry.getOption()).toLowerCase();
 			optionIndexes.put(option, idx++);
 		}

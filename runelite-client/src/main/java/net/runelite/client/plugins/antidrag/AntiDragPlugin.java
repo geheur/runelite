@@ -49,10 +49,10 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 
 @PluginDescriptor(
-	name = "Anti Drag",
-	description = "Prevent dragging an item for a specified delay",
-	tags = {"antidrag", "delay", "inventory", "items"},
-	enabledByDefault = false
+		name = "Anti Drag",
+		description = "Prevent dragging an item for a specified delay",
+		tags = {"antidrag", "delay", "inventory", "items"},
+		enabledByDefault = false
 )
 public class AntiDragPlugin extends Plugin implements KeyListener
 {
@@ -68,7 +68,8 @@ public class AntiDragPlugin extends Plugin implements KeyListener
 			WidgetInfo.BANK_INVENTORY_EQUIPMENT_SCREEN_ITEMS_CONTAINER,
 			WidgetInfo.CHAMBERS_OF_XERIC_PRIVATE_STORAGE,
 			WidgetInfo.CHAMBERS_OF_XERIC_INVENTORY_STORAGE,
-			WidgetInfo.SEED_VAULT_ITEM_CONTAINER
+			WidgetInfo.SEED_VAULT_ITEM_CONTAINER,
+			WidgetInfo.BANK_INVENTORY_ITEMS_CONTAINER
 	);
 
 	// list of group ids that when loaded indicate that an item container that should have anti drag on it may have
@@ -236,6 +237,9 @@ public class AntiDragPlugin extends Plugin implements KeyListener
 		// The seed vault seems to reset its drag delay every time it opens, and setting the drag delays in
 		// onWidgetHiddenChanged didn't work to fix this. So, set it back every tick.
 		int delay = ((config.onShiftOnly() && !shiftHeld) || ctrlHeld) ? DEFAULT_DELAY : config.dragDelay();
+//		for (WidgetInfo widgetInfo : new WidgetInfo[]{WidgetInfo.SEED_VAULT_ITEM_CONTAINER, WidgetInfo.CHAMBERS_OF_XERIC_PRIVATE_STORAGE}) {
+//
+//		}
 		Widget itemContainer = client.getWidget(WidgetInfo.SEED_VAULT_ITEM_CONTAINER);
 		if (itemContainer != null)
 		{
@@ -261,18 +265,34 @@ public class AntiDragPlugin extends Plugin implements KeyListener
 				}
 			}
 		}
+
+		itemContainer = client.getWidget(WidgetInfo.BANK_INVENTORY_ITEMS_CONTAINER);
+		if (itemContainer != null)
+		{
+			Widget[] items = itemContainer.getDynamicChildren();
+			if (items.length >= 1 && items[0].getDragDeadTime() != delay)
+			{
+				for (Widget item : items)
+				{
+					item.setDragDeadTime(delay);
+				}
+			}
+		}
 	}
 
 	private void setNonInventoryDragDelays(int delay)
 	{
 		for (WidgetInfo itemContainerInfo : itemContainers)
 		{
+//		    System.out.println("setting drag delays for item container " + itemContainerInfo.name() + " to " + delay);
 			final Widget itemContainer = client.getWidget(itemContainerInfo);
 			if (itemContainer != null)
 			{
 				Widget[] items = itemContainer.getDynamicChildren();
+//				System.out.println(items.length + " items");
 				for (Widget item : items)
 				{
+//					System.out.println("setting drag delay");
 					item.setDragDeadTime(delay);
 				}
 			}

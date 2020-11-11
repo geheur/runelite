@@ -63,7 +63,7 @@ class KeyRemappingListener implements KeyListener
 		Widget jewelleryBoxWidget = client.getWidget(590, 0);
 		if (jewelleryBoxWidget != null && !jewelleryBoxWidget.isSelfHidden()) map = jewelleryMap;
 		Widget spiritTreeWidget = client.getWidget(187, 0);
-		if (spiritTreeWidget != null && !spiritTreeWidget.isSelfHidden()) map = treeMap;
+		if (spiritTreeWidget != null && !plugin.treeMenuHidden) map = treeMap;
 
 		boolean b = e.getKeyChar() >= '0' && e.getKeyChar() <= '9';
 		if (map != null && !b) {

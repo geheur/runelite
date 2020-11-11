@@ -25,30 +25,15 @@
  */
 package net.runelite.client.plugins.grounditems;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FontMetrics;
-import java.awt.Graphics2D;
-import java.awt.Polygon;
-import java.awt.Rectangle;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.AbstractMap.SimpleEntry;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.Perspective;
 import net.runelite.api.Player;
 import net.runelite.api.Point;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
-import static net.runelite.client.plugins.grounditems.GroundItemsPlugin.MAX_QUANTITY;
-import static net.runelite.client.plugins.grounditems.config.ItemHighlightMode.MENU;
+import net.runelite.client.Notifier;
 import net.runelite.client.plugins.grounditems.config.PriceDisplayMode;
+import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
@@ -58,6 +43,18 @@ import net.runelite.client.ui.overlay.components.ProgressPieComponent;
 import net.runelite.client.ui.overlay.components.TextComponent;
 import net.runelite.client.util.QuantityFormatter;
 import org.apache.commons.lang3.ArrayUtils;
+
+import javax.inject.Inject;
+import java.awt.*;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.List;
+import java.util.*;
+
+import static net.runelite.client.plugins.grounditems.GroundItemsPlugin.MAX_QUANTITY;
+import static net.runelite.client.plugins.grounditems.config.ItemHighlightMode.MENU;
 
 public class GroundItemsOverlay extends Overlay
 {
@@ -86,6 +83,11 @@ public class GroundItemsOverlay extends Overlay
 	private final TextComponent textComponent = new TextComponent();
 	private final ProgressPieComponent progressPieComponent = new ProgressPieComponent();
 	private final Map<WorldPoint, Integer> offsetMap = new HashMap<>();
+
+	public Map<GroundItem.GroundItemKey, Instant> clueScrollTimers = new HashMap<>();
+
+	@Inject
+	private Notifier notifier;
 
 	@Inject
 	private GroundItemsOverlay(Client client, GroundItemsPlugin plugin, GroundItemsConfig config)
@@ -119,9 +121,41 @@ public class GroundItemsOverlay extends Overlay
 		final LocalPoint localLocation = player.getLocalLocation();
 		final Point mousePos = client.getMouseCanvasPosition();
 		Collection<GroundItem> groundItemList = plugin.getCollectedGroundItems().values();
+		for (GroundItem groundItem : groundItemList) {
+			if ((!groundItem.getName().toLowerCase().contains("clue scroll") || groundItem.getSpawnTime() == null) || (groundItem.getLootType() != LootType.PVM && groundItem.getLootType() != LootType.DROPPED)) continue;
+			Instant spawnTime = groundItem.getSpawnTime();
+			Instant despawnTime;
+			if (groundItem.getLootType() == LootType.DROPPED)
+			{
+				despawnTime = spawnTime.plus(DESPAWN_TIME_DROP);
+			}
+			else
+			{
+				despawnTime = spawnTime.plus(DESPAWN_TIME_LOOT);
+			}
+			clueScrollTimers.put(new GroundItem.GroundItemKey(groundItem.getItemId(), groundItem.getLocation()), despawnTime);
+		}
+		String s = "";
+		Color color2 = Color.WHITE;
+		Graphics graphics2 = graphics.create();
+		for (Map.Entry<GroundItem.GroundItemKey, Instant> groundItemInstantEntry : clueScrollTimers.entrySet()) {
+			long until = Instant.now().until(groundItemInstantEntry.getValue(), ChronoUnit.SECONDS);
+			s += until + " ";
+			if (until < 20) {
+				notifier.notify("clue scroll despawn timer!");
+				color2 = Color.RED;
+				graphics.setColor(new Color(255, 0, 0, 125));
+				graphics.drawRect(0, 0, 1000, 1000);
+			}
+			if (until < 0) clueScrollTimers.remove(groundItemInstantEntry.getKey());
+		}
+		graphics2.setFont(FontManager.getRunescapeSmallFont().deriveFont(36f));
+		graphics2.setColor(color2);
+		graphics2.drawString(s, 150, 150);
+
 		GroundItem topGroundItem = null;
 
-		if (plugin.isHotKeyPressed())
+		if (plugin.isHotKeyPressed());
 		{
 			// Make copy of ground items because we are going to modify them here, and the array list supports our
 			// desired behaviour here
@@ -178,6 +212,7 @@ public class GroundItemsOverlay extends Overlay
 		final boolean groundItemTimers = config.groundItemTimers();
 		final boolean outline = config.textOutline();
 
+//		System.out.println("bla");
 		for (GroundItem item : groundItemList)
 		{
 			final LocalPoint groundPoint = LocalPoint.fromWorld(client, item.getLocation());
@@ -187,6 +222,8 @@ public class GroundItemsOverlay extends Overlay
 			{
 				continue;
 			}
+
+//			System.out.println("Ground item: " + item.getName() + " " + item.getHeight() + " " + item.getOffset() + " " + item.getQuantity());
 
 			final Color highlighted = plugin.getHighlighted(new NamedQuantity(item), item.getGePrice(), item.getHaPrice());
 			final Color hidden = plugin.getHidden(new NamedQuantity(item), item.getGePrice(), item.getHaPrice(), item.isTradeable());
@@ -273,6 +310,8 @@ public class GroundItemsOverlay extends Overlay
 			final String itemString = itemStringBuilder.toString();
 			itemStringBuilder.setLength(0);
 
+//			System.out.println("  " + groundPoint.getX() + " " + groundPoint.getY() + " " + item.getHeight());
+
 			final Point textPoint = Perspective.getCanvasTextLocation(client,
 				graphics,
 				groundPoint,
@@ -283,10 +322,12 @@ public class GroundItemsOverlay extends Overlay
 			{
 				continue;
 			}
+//			System.out.println("  text: " + textPoint.getX() + " " + textPoint.getY());
 
 			final int offset = plugin.isHotKeyPressed()
 				? item.getOffset()
 				: offsetMap.compute(item.getLocation(), (k, v) -> v != null ? v + 1 : 0);
+//			System.out.println("  offset: " + item.getOffset() + " " + offsetMap.compute(item.getLocation(), (k, v) -> v != null ? v + 1 : 0));
 
 			final int textX = textPoint.getX();
 			final int textY = textPoint.getY() - (STRING_GAP * offset);

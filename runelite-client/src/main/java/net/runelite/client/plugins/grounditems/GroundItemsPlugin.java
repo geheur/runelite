@@ -254,10 +254,13 @@ public class GroundItemsPlugin extends Plugin
 	@Subscribe
 	public void onItemDespawned(ItemDespawned itemDespawned)
 	{
+//	    System.out.println("item despawned: " + itemDespawned.getItem().getId());
 		TileItem item = itemDespawned.getItem();
 		Tile tile = itemDespawned.getTile();
 
+
 		GroundItem.GroundItemKey groundItemKey = new GroundItem.GroundItemKey(item.getId(), tile.getWorldLocation());
+		overlay.clueScrollTimers.remove(groundItemKey);
 		GroundItem groundItem = collectedGroundItems.get(groundItemKey);
 		if (groundItem == null)
 		{
@@ -312,6 +315,7 @@ public class GroundItemsPlugin extends Plugin
 	@Subscribe
 	public void onClientTick(ClientTick event)
 	{
+	    onClientTick2(event);
 		if (!config.collapseEntries())
 		{
 			return;
@@ -662,6 +666,27 @@ public class GroundItemsPlugin extends Plugin
 		}
 		
 		notifier.notify(notificationStringBuilder.toString());
+	}
+
+	public void onClientTick2(ClientTick clientTick)
+	{
+		// The menu is not rebuilt when it is open, so don't swap or else it will
+		// repeatedly swap entries
+		if (client.getGameState() != GameState.LOGGED_IN || client.isMenuOpen())
+		{
+			return;
+		}
+
+		MenuEntry[] menuEntries = client.getMenuEntries();
+
+//		for (GroundItem value : collectedGroundItems.values()) {
+//		    System.out.println("  " + value.getName() + " " + value.getLocation() + " " + value.getLocation().getRegionX() + " " + value.getLocation().getRegionY());
+//		}
+
+//		for (MenuEntry menuEntry : menuEntries) {
+//			collectedGroundItems.get(new GroundItem.GroundItemKey(menuEntry.getIdentifier(), new WorldPoint()));
+//		    menuEntry.setTarget(menuEntry.getTarget() + " " + menuEntry.getIdentifier() + " " + menuEntry.getParam0() + " " + menuEntry.getParam1());
+//		}
 	}
 
 	private int getValueByMode(int gePrice, int haPrice)

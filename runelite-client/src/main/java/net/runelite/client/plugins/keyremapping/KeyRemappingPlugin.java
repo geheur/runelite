@@ -31,13 +31,12 @@ import javax.inject.Inject;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import net.runelite.api.Client;
-import net.runelite.api.GameState;
-import net.runelite.api.VarClientInt;
-import net.runelite.api.VarClientStr;
-import net.runelite.api.Varbits;
+import net.runelite.api.*;
+import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ScriptCallbackEvent;
+import net.runelite.api.events.WidgetHiddenChanged;
 import net.runelite.api.widgets.Widget;
+import net.runelite.api.widgets.WidgetID;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
@@ -183,6 +182,15 @@ public class KeyRemappingPlugin extends Plugin
 		{
 			setChatboxWidgetInput(chatboxInput, PRESS_ENTER_TO_CHAT);
 		}
+	}
+
+	public static boolean treeMenuHidden = true;
+	public static boolean jewelleryBoxMenuHidden = true;
+
+	@Subscribe
+	public void onGameTick(GameTick gameTick) {
+		Widget spiritTreeWidget = client.getWidget(187, 0);
+		treeMenuHidden = (spiritTreeWidget == null || spiritTreeWidget.getParent() == null);
 	}
 
 	void unlockChat()
