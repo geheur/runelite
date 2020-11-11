@@ -84,10 +84,10 @@ import java.util.List;
 import java.util.Set;
 
 @PluginDescriptor(
-		name = "Menu Entry Swapper",
-		description = "Change the default option that is displayed when hovering over objects",
-		tags = {"npcs", "inventory", "items", "objects"},
-		enabledByDefault = false
+	name = "Menu Entry Swapper",
+	description = "Change the default option that is displayed when hovering over objects",
+	tags = {"npcs", "inventory", "items", "objects"},
+	enabledByDefault = false
 )
 public class MenuEntrySwapperPlugin extends Plugin
 {
@@ -104,37 +104,37 @@ public class MenuEntrySwapperPlugin extends Plugin
 	public static final String RESET_BUY_SELL_QUANTITY_REGEX = "Reset (buy|sell) quantity";
 
 	private static final WidgetMenuOption FIXED_INVENTORY_TAB_CONFIGURE = new WidgetMenuOption(CONFIGURE,
-			MENU_TARGET, WidgetInfo.FIXED_VIEWPORT_INVENTORY_TAB);
+		MENU_TARGET, WidgetInfo.FIXED_VIEWPORT_INVENTORY_TAB);
 
 	private static final WidgetMenuOption FIXED_INVENTORY_TAB_SAVE = new WidgetMenuOption(SAVE,
-			MENU_TARGET, WidgetInfo.FIXED_VIEWPORT_INVENTORY_TAB);
+		MENU_TARGET, WidgetInfo.FIXED_VIEWPORT_INVENTORY_TAB);
 
 	private static final WidgetMenuOption RESIZABLE_INVENTORY_TAB_CONFIGURE = new WidgetMenuOption(CONFIGURE,
-			MENU_TARGET, WidgetInfo.RESIZABLE_VIEWPORT_INVENTORY_TAB);
+		MENU_TARGET, WidgetInfo.RESIZABLE_VIEWPORT_INVENTORY_TAB);
 
 	private static final WidgetMenuOption RESIZABLE_INVENTORY_TAB_SAVE = new WidgetMenuOption(SAVE,
-			MENU_TARGET, WidgetInfo.RESIZABLE_VIEWPORT_INVENTORY_TAB);
+		MENU_TARGET, WidgetInfo.RESIZABLE_VIEWPORT_INVENTORY_TAB);
 
 	private static final WidgetMenuOption RESIZABLE_BOTTOM_LINE_INVENTORY_TAB_CONFIGURE = new WidgetMenuOption(CONFIGURE,
-			MENU_TARGET, WidgetInfo.RESIZABLE_VIEWPORT_BOTTOM_LINE_INVENTORY_TAB);
+		MENU_TARGET, WidgetInfo.RESIZABLE_VIEWPORT_BOTTOM_LINE_INVENTORY_TAB);
 
 	private static final WidgetMenuOption RESIZABLE_BOTTOM_LINE_INVENTORY_TAB_SAVE = new WidgetMenuOption(SAVE,
-			MENU_TARGET, WidgetInfo.RESIZABLE_VIEWPORT_BOTTOM_LINE_INVENTORY_TAB);
+		MENU_TARGET, WidgetInfo.RESIZABLE_VIEWPORT_BOTTOM_LINE_INVENTORY_TAB);
 
 	private static final Set<MenuAction> NPC_MENU_TYPES = ImmutableSet.of(
-			MenuAction.NPC_FIRST_OPTION,
-			MenuAction.NPC_SECOND_OPTION,
-			MenuAction.NPC_THIRD_OPTION,
-			MenuAction.NPC_FOURTH_OPTION,
-			MenuAction.NPC_FIFTH_OPTION,
-			MenuAction.EXAMINE_NPC);
+		MenuAction.NPC_FIRST_OPTION,
+		MenuAction.NPC_SECOND_OPTION,
+		MenuAction.NPC_THIRD_OPTION,
+		MenuAction.NPC_FOURTH_OPTION,
+		MenuAction.NPC_FIFTH_OPTION,
+		MenuAction.EXAMINE_NPC);
 
 	private static final Set<String> ESSENCE_MINE_NPCS = ImmutableSet.of(
-			"aubury",
-			"wizard sedridor",
-			"wizard distentor",
-			"wizard cromperty",
-			"brimstail"
+		"aubury",
+		"wizard sedridor",
+		"wizard distentor",
+		"wizard cromperty",
+		"brimstail"
 	);
 
 	private final Map<String, Integer> buyQuantityMap = new HashMap<>();
@@ -148,9 +148,6 @@ public class MenuEntrySwapperPlugin extends Plugin
 
 	@Inject
 	private MenuEntrySwapperConfig config;
-
-//	@Inject
-//	private ClickInputListener clickInputListener;
 
 	@Inject
 	private ConfigManager configManager;
@@ -384,6 +381,8 @@ public class MenuEntrySwapperPlugin extends Plugin
 //		swap("clean", "use", config::swapHerbs);
 		swap("clean", target -> !(target.contains("buchu") || target.contains("golpar") || target.contains("noxifer")), "use", config::swapHerbs);
 
+		swap("read", "recite-prayer", config::swapPrayerBook);
+
 		swap("collect-note", "collect-item", () -> config.swapGEItemCollect() == GEItemCollectMode.ITEMS);
 		swap("collect-notes", "collect-items", () -> config.swapGEItemCollect() == GEItemCollectMode.ITEMS);
 
@@ -483,7 +482,6 @@ public class MenuEntrySwapperPlugin extends Plugin
 
 	private void enableCustomization()
 	{
-//		mouseManager.registerMouseListener(clickInputListener);
 		refreshShiftClickCustomizationMenus();
 		// set shift click action index on the item compositions
 		clientThread.invoke(this::resetItemCompositionCache);
@@ -491,7 +489,6 @@ public class MenuEntrySwapperPlugin extends Plugin
 
 	private void disableCustomization()
 	{
-//		mouseManager.unregisterMouseListener(clickInputListener);
 		removeShiftClickCustomizationMenus();
 		configuringShiftClick = false;
 		// flush item compositions to reset the shift click action index
@@ -502,8 +499,8 @@ public class MenuEntrySwapperPlugin extends Plugin
 	public void onWidgetMenuOptionClicked(WidgetMenuOptionClicked event)
 	{
 		if (event.getWidget() == WidgetInfo.FIXED_VIEWPORT_INVENTORY_TAB
-				|| event.getWidget() == WidgetInfo.RESIZABLE_VIEWPORT_INVENTORY_TAB
-				|| event.getWidget() == WidgetInfo.RESIZABLE_VIEWPORT_BOTTOM_LINE_INVENTORY_TAB)
+			|| event.getWidget() == WidgetInfo.RESIZABLE_VIEWPORT_INVENTORY_TAB
+			|| event.getWidget() == WidgetInfo.RESIZABLE_VIEWPORT_BOTTOM_LINE_INVENTORY_TAB)
 		{
 			configuringShiftClick = event.getMenuOption().equals(CONFIGURE) && Text.removeTags(event.getMenuTarget()).equals(MENU_TARGET);
 			refreshShiftClickCustomizationMenus();
@@ -825,18 +822,18 @@ public class MenuEntrySwapperPlugin extends Plugin
 		final NPC hintArrowNpc = client.getHintArrowNpc();
 
 		if (hintArrowNpc != null
-				&& hintArrowNpc.getIndex() == eventId
-				&& NPC_MENU_TYPES.contains(menuAction))
+			&& hintArrowNpc.getIndex() == eventId
+			&& NPC_MENU_TYPES.contains(menuAction))
 		{
 			return;
 		}
 
 		if (shiftModifier() && (menuAction == MenuAction.ITEM_FIRST_OPTION
-				|| menuAction == MenuAction.ITEM_SECOND_OPTION
-				|| menuAction == MenuAction.ITEM_THIRD_OPTION
-				|| menuAction == MenuAction.ITEM_FOURTH_OPTION
-				|| menuAction == MenuAction.ITEM_FIFTH_OPTION
-				|| menuAction == MenuAction.ITEM_USE))
+			|| menuAction == MenuAction.ITEM_SECOND_OPTION
+			|| menuAction == MenuAction.ITEM_THIRD_OPTION
+			|| menuAction == MenuAction.ITEM_FOURTH_OPTION
+			|| menuAction == MenuAction.ITEM_FIFTH_OPTION
+			|| menuAction == MenuAction.ITEM_USE))
 		{
 			// Special case use shift click due to items not actually containing a "Use" option, making
 			// the client unable to perform the swap itself.
@@ -885,7 +882,6 @@ public class MenuEntrySwapperPlugin extends Plugin
 		optionIndexes.clear();
 		for (MenuEntry entry : menuEntries)
 		{
-//			System.out.println("menu entry is " + entry.getTarget());
 			String option = Text.removeTags(entry.getOption()).toLowerCase();
 			optionIndexes.put(option, idx++);
 		}
@@ -977,7 +973,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 	private void swap(ArrayListMultimap<String, Integer> optionIndexes, MenuEntry[] entries, int index1, int index2)
 	{
 		MenuEntry entry1 = entries[index1],
-				entry2 = entries[index2];
+			entry2 = entries[index2];
 
 		entries[index1] = entry2;
 		entries[index2] = entry1;
@@ -986,10 +982,10 @@ public class MenuEntrySwapperPlugin extends Plugin
 
 		// Update optionIndexes
 		String option1 = Text.removeTags(entry1.getOption()).toLowerCase(),
-				option2 = Text.removeTags(entry2.getOption()).toLowerCase();
+			option2 = Text.removeTags(entry2.getOption()).toLowerCase();
 
 		List<Integer> list1 = optionIndexes.get(option1),
-				list2 = optionIndexes.get(option2);
+			list2 = optionIndexes.get(option2);
 
 		// call remove(Object) instead of remove(int)
 		list1.remove((Integer) index1);
@@ -999,7 +995,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 		sortedInsert(list2, index1);
 	}
 
-	private static <T extends Comparable<? super T>> void sortedInsert(List<T> list, T value)
+	private static <T extends Comparable<? super T>> void sortedInsert(List<T> list, T value) // NOPMD: UnusedPrivateMethod: false positive
 	{
 		int idx = Collections.binarySearch(list, value);
 		list.add(idx < 0 ? -idx - 1 : idx, value);

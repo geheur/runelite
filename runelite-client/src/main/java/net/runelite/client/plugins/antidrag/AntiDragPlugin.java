@@ -25,10 +25,8 @@
 package net.runelite.client.plugins.antidrag;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Provides;
-import java.awt.event.KeyEvent;
-import java.util.List;
-import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.Varbits;
@@ -48,11 +46,17 @@ import net.runelite.client.input.KeyManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 
+import javax.inject.Inject;
+import java.awt.event.KeyEvent;
+import java.util.List;
+import java.util.List;
+import net.runelite.api.events.GameTick;
+
 @PluginDescriptor(
-		name = "Anti Drag",
-		description = "Prevent dragging an item for a specified delay",
-		tags = {"antidrag", "delay", "inventory", "items"},
-		enabledByDefault = false
+	name = "Anti Drag",
+	description = "Prevent dragging an item for a specified delay",
+	tags = {"antidrag", "delay", "inventory", "items"},
+	enabledByDefault = false
 )
 public class AntiDragPlugin extends Plugin implements KeyListener
 {
@@ -225,7 +229,9 @@ public class AntiDragPlugin extends Plugin implements KeyListener
 	@Subscribe
 	public void onWidgetLoaded(WidgetLoaded widgetLoaded)
 	{
-		if (widgetLoadedGroupIds.contains(widgetLoaded.getGroupId()) && (!config.onShiftOnly() || shiftHeld) && !ctrlHeld)
+		if ((widgetLoaded.getGroupId() == WidgetID.BANK_GROUP_ID ||
+			widgetLoaded.getGroupId() == WidgetID.BANK_INVENTORY_GROUP_ID ||
+			widgetLoaded.getGroupId() == WidgetID.DEPOSIT_BOX_GROUP_ID) && (!config.onShiftOnly() || shiftHeld) && !ctrlHeld)
 		{
 			setNonInventoryDragDelays(config.dragDelay());
 		}
