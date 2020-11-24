@@ -29,6 +29,7 @@ import lombok.Value;
 
 @Value
 @RequiredArgsConstructor
+public
 class NamedQuantity
 {
 	private final String name;

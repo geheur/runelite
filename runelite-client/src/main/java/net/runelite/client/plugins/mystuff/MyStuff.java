@@ -1,64 +1,28 @@
 package net.runelite.client.plugins.mystuff;
 
-import java.awt.AWTException;
-import java.awt.Image;
-import java.awt.SystemTray;
-import java.awt.Toolkit;
-import java.awt.TrayIcon;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import javax.inject.Inject;
-import net.runelite.api.Actor;
-import net.runelite.api.ChatMessageType;
-import net.runelite.api.Client;
-import net.runelite.api.GameState;
-import net.runelite.api.KeyCode;
-import net.runelite.api.MenuEntry;
-import net.runelite.api.NPC;
-import net.runelite.api.Player;
-import net.runelite.api.Prayer;
-import net.runelite.api.Skill;
-import net.runelite.api.Varbits;
+import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
-import net.runelite.api.events.AnimationChanged;
-import net.runelite.api.events.ChatMessage;
-import net.runelite.api.events.ClientTick;
-import net.runelite.api.events.GameTick;
-import net.runelite.api.events.HitsplatApplied;
-import net.runelite.api.events.InteractingChanged;
-import net.runelite.api.events.MenuOptionClicked;
-import net.runelite.api.events.StatChanged;
-import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.events.*;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
-import static net.runelite.api.widgets.WidgetInfo.DIALOG_NPC_NAME;
-import static net.runelite.api.widgets.WidgetInfo.DIALOG_NPC_TEXT;
-import static net.runelite.api.widgets.WidgetInfo.DIALOG_OPTION;
-import static net.runelite.api.widgets.WidgetInfo.DIALOG_PLAYER;
 import net.runelite.api.widgets.WidgetItem;
 import net.runelite.client.Notifier;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.eventbus.Subscribe;
-import net.runelite.client.game.LootManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.PluginManager;
-//import net.runelite.client.plugins.menuentryswapper.Event;
-//import net.runelite.client.plugins.menuentryswapper.MyLog;
-//import static net.runelite.client.plugins.menuentryswapper.MyLog.myprint;
-import net.runelite.client.plugins.music.MusicPlugin;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.Text;
+
+import javax.inject.Inject;
+import java.awt.*;
+import java.util.List;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static net.runelite.api.widgets.WidgetInfo.*;
 
 @PluginDescriptor(
         name = "mystuff",
@@ -750,11 +714,11 @@ public class MyStuff extends Plugin
     {
         if (client.getLocalPlayer().getAnimation() == 1167 && lastPlayerAnimation != 1167) {
 
-            System.out.println("player: " + client.getTickCount() + " swamp trident");
+//            System.out.println("player: " + client.getTickCount() + " swamp trident");
             playerAttackCooldown = client.getTickCount();
         } else if (client.getLocalPlayer().getAnimation() == 7552 && lastPlayerAnimation != 7552) {
 
-            System.out.println("player: " + client.getTickCount() + " rcb");
+//            System.out.println("player: " + client.getTickCount() + " rcb");
             playerAttackCooldown = client.getTickCount();
         }
         lastPlayerAnimation = client.getLocalPlayer().getAnimation();

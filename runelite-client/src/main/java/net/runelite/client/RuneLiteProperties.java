@@ -74,7 +74,7 @@ public class RuneLiteProperties
 
 	public static String getVersion()
 	{
-		return properties.getProperty(RUNELITE_VERSION);
+		return "1.6.32";//properties.getProperty(RUNELITE_VERSION);
 	}
 
 	public static String getRunescapeVersion()

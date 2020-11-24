@@ -178,7 +178,7 @@ public class GroundItemsPlugin extends Plugin
 	private final Map<GroundItem.GroundItemKey, GroundItem> collectedGroundItems = new LinkedHashMap<>();
 	private List<PriceHighlight> priceChecks = ImmutableList.of();
 	private LoadingCache<NamedQuantity, Boolean> highlightedItems;
-	private LoadingCache<NamedQuantity, Boolean> hiddenItems;
+	public static LoadingCache<NamedQuantity, Boolean> hiddenItems;
 	private final Queue<Integer> droppedItemQueue = EvictingQueue.create(16); // recently dropped items
 
 	@Provides
@@ -257,7 +257,6 @@ public class GroundItemsPlugin extends Plugin
 //	    System.out.println("item despawned: " + itemDespawned.getItem().getId());
 		TileItem item = itemDespawned.getItem();
 		Tile tile = itemDespawned.getTile();
-
 
 		GroundItem.GroundItemKey groundItemKey = new GroundItem.GroundItemKey(item.getId(), tile.getWorldLocation());
 		overlay.clueScrollTimers.remove(groundItemKey);

@@ -468,6 +468,7 @@ public class WeaponChargesPlugin extends Plugin
 	public static final List<SimpleWeapon> simpleWeapons = new ArrayList<>();
 	static {
 		simpleWeapons.add(new SimpleWeapon(ItemID.TRIDENT_OF_THE_SWAMP, Arrays.asList(SWAMP_TRIDENT_CAST), "trident of the swamp"));
+		simpleWeapons.add(new SimpleWeapon(ItemID.TRIDENT_OF_THE_SEAS, Arrays.asList(SWAMP_TRIDENT_CAST), "trident of the seas"));
 		/* "Your weapon has d,ddd charges." */
 		simpleWeapons.add(new SimpleWeapon(ItemID.ABYSSAL_TENTACLE, Arrays.asList(1658), "abyssal tentacle"));
 		simpleWeapons.add(new SimpleWeapon(ItemID.CRYSTAL_HALBERD, Arrays.asList(428, 440, 1203), "crystal halberd"));

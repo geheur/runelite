@@ -2,10 +2,11 @@ package net.runelite.client.plugins.mystuff;
 
 import java.awt.Font;
 import java.awt.geom.Point2D;
-import net.runelite.api.Client;
-import net.runelite.api.Player;
-import net.runelite.api.Point;
+
+import net.runelite.api.*;
 import net.runelite.client.game.LootManager;
+import net.runelite.client.plugins.barragehelper.BarrageHelperPlugin;
+import net.runelite.client.plugins.playerindicators.PlayerNameLocation;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
@@ -16,7 +17,11 @@ import javax.inject.Inject;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.util.Map;
+
 import net.runelite.client.ui.overlay.OverlayUtil;
+import net.runelite.client.util.Text;
 
 public class MyStuffOverlay extends Overlay
 {
@@ -38,9 +43,30 @@ public class MyStuffOverlay extends Overlay
 
     public String playerOverheadText = null;
 
+    private static final int ACTOR_OVERHEAD_TEXT_MARGIN = 40;
     @Override
     public Dimension render(Graphics2D graphics)
     {
+        for (Map.Entry<NPC, Integer> entry : BarrageHelperPlugin.predictedNpcHealthCache.entrySet()) {
+            NPC actor = entry.getKey();
+            Integer health = entry.getValue();
+//            System.out.println("drawing health " + health + " for actor " + actor.getName());
+            int zOffset;
+            zOffset = actor.getLogicalHeight() + ACTOR_OVERHEAD_TEXT_MARGIN;
+
+//            final String name = Text.sanitize(actor.getName());
+            Point textLocation = actor.getCanvasTextLocation(graphics, Integer.toString(health), zOffset);
+
+            if (textLocation == null)
+            {
+                System.out.println("textlocation is null");
+                continue;
+            }
+
+            Color color = (health <= 0) ? Color.RED : Color.WHITE;
+            OverlayUtil.renderTextLocation(graphics, textLocation, Integer.toString(health), color);
+        }
+
         if (playerOverheadText != null)
         {
             Player localPlayer = client.getLocalPlayer();

@@ -155,7 +155,7 @@ public class GroundItemsOverlay extends Overlay
 
 		GroundItem topGroundItem = null;
 
-		if (plugin.isHotKeyPressed());
+		if (plugin.isHotKeyPressed())
 		{
 			// Make copy of ground items because we are going to modify them here, and the array list supports our
 			// desired behaviour here

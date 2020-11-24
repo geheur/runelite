@@ -11,15 +11,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
-import net.runelite.api.Actor;
-import net.runelite.api.Client;
-import net.runelite.api.GameState;
-import net.runelite.api.MenuAction;
-import net.runelite.api.MenuEntry;
-import net.runelite.api.NPC;
+
+import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.ClientTick;
 import net.runelite.api.events.HitsplatApplied;
+import net.runelite.api.events.StatChanged;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -54,6 +51,7 @@ public class BarrageHelperPlugin extends Plugin
 		MenuAction.ITEM_USE_ON_NPC);
 
 	private Map<NPC, Integer> npcHealthCache = new HashMap<>();
+	public static Map<NPC, Integer> predictedNpcHealthCache = new HashMap<>();
 
 	private List<String> npcWhiteList = Collections.emptyList();
 
@@ -109,6 +107,7 @@ public class BarrageHelperPlugin extends Plugin
 			NPC npc = iterator.next();
 			if (npc.isDead() || npcManager.getNpcInfo((npc.getId())) == null) {
 				iterator.remove();
+				predictedNpcHealthCache.remove(npc);
 			} else {
 				Integer health = getHealth(npc);
 				if (health != null && health != -1) {
@@ -285,6 +284,44 @@ public class BarrageHelperPlugin extends Plugin
 	{
 		int colorIndex = (worldLocation.getX() * 37 + worldLocation.getY()) % arr.length;
 		return arr[colorIndex];
+	}
+
+	private int lastDefenceXp = -1;
+	@Subscribe
+	public void onStatChanged(StatChanged statChanged) {
+		if (statChanged.getSkill() != Skill.DEFENCE) return;
+
+		int xp = statChanged.getXp();
+		int diff = xp - lastDefenceXp;
+		int damageDone = diff / 12;
+
+		Actor interacting = client.getLocalPlayer().getInteracting();
+		String name = (interacting == null) ? "null" : interacting.getName();
+		String id = "not an npc";
+		if (interacting instanceof NPC) {
+			id = Integer.toString(((NPC) interacting).getId());
+		}
+//		System.out.println("damage done: " + damageDone + " against " + name + " (" + id + ")");
+		lastDefenceXp = xp;
+
+		if (!(interacting instanceof NPC)) return;
+
+		NPCComposition composition = client.getNpcDefinition(((NPC) interacting).getId());
+		Integer maxHealth = npcManager.getHealth(((NPC) interacting).getId());
+		if (maxHealth == null) {
+			System.out.println("health was null! " + ((NPC) interacting).getId());
+			return;
+		}
+
+		Integer predictedHealth = predictedNpcHealthCache.get(interacting);
+		if (predictedHealth == null) {
+			predictedHealth = maxHealth;
+		}
+		System.out.println("modifying health of " + name + " " + ((NPC) interacting).getId() + " from " + predictedHealth + " to " + (predictedHealth - damageDone));
+//		if (predictedHealth - damageDone <= 0) {
+//
+//		}
+		predictedNpcHealthCache.put((NPC) interacting, predictedHealth - damageDone);
 	}
 
 }

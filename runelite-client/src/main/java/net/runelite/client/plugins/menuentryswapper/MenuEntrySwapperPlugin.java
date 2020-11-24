@@ -76,6 +76,8 @@ import net.runelite.client.menus.MenuManager;
 import net.runelite.client.menus.WidgetMenuOption;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.grounditems.GroundItemsPlugin;
+import net.runelite.client.plugins.grounditems.NamedQuantity;
 import net.runelite.client.util.Text;
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -892,6 +894,36 @@ public class MenuEntrySwapperPlugin extends Plugin
 		{
 			swapMenuEntry(idx++, entry);
 		}
+
+		if (menuEntries.length >= 2) {
+			MenuEntry menuEntry = menuEntries[menuEntries.length - 2];
+			//		MenuEntry menuEntry = menuEntries[0];
+			System.out.println("menu entry 0 is " + menuEntry.getTarget() + " " + menuEntry.getOption() + " " + menuEntry.getType());
+			if (menuEntry.getType() == MenuAction.GROUND_ITEM_THIRD_OPTION.getId()) {
+				Boolean unchecked = GroundItemsPlugin.hiddenItems.getUnchecked(new NamedQuantity(Text.removeTags(menuEntry.getTarget()).toLowerCase(), 1));
+				System.out.println("unchecked is " + unchecked);
+				if (Boolean.TRUE.equals(unchecked)) {
+					for (int i = 0; i < menuEntries.length; i++) {
+						MenuEntry entry = menuEntries[i];
+						System.out.println(i + " " + entry.getType() + " " + entry.getIdentifier() + " " + entry.getTarget() + " " + entry.getOption());
+						if (entry.getType() == MenuAction.GROUND_ITEM_THIRD_OPTION.getId()) {
+							Boolean isHidden = GroundItemsPlugin.hiddenItems.getUnchecked(new NamedQuantity(entry.getTarget(), 1));
+							if (Boolean.FALSE.equals(isHidden)) {
+								System.out.println("swapping! " + menuEntries[i].getTarget() + " " + menuEntries[i].getOption() + " " + menuEntry.getTarget() + " " + menuEntry.getOption());
+								menuEntries[i] = menuEntry;
+								menuEntries[menuEntries.length - 2] = entry;
+								for (int j = 0; j < menuEntries.length; j++) {
+									MenuEntry e = menuEntries[j];
+									System.out.println(j + " " + e.getType() + " " + e.getIdentifier() + " " + e.getTarget() + " " + e.getOption());
+								}
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+
 	}
 
 	@Subscribe
