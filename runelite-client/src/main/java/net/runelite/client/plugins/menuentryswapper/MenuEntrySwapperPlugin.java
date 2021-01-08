@@ -123,6 +123,16 @@ public class MenuEntrySwapperPlugin extends Plugin
 	private static final WidgetMenuOption RESIZABLE_BOTTOM_LINE_INVENTORY_TAB_SAVE = new WidgetMenuOption(SAVE,
 		MENU_TARGET, WidgetInfo.RESIZABLE_VIEWPORT_BOTTOM_LINE_INVENTORY_TAB);
 
+	private static final Set<MenuAction> ITEM_MENU_TYPES = ImmutableSet.of(
+		MenuAction.ITEM_FIRST_OPTION,
+		MenuAction.ITEM_SECOND_OPTION,
+		MenuAction.ITEM_THIRD_OPTION,
+		MenuAction.ITEM_FOURTH_OPTION,
+		MenuAction.ITEM_FIFTH_OPTION,
+		MenuAction.EXAMINE_ITEM,
+		MenuAction.ITEM_USE
+	);
+
 	private static final Set<MenuAction> NPC_MENU_TYPES = ImmutableSet.of(
 		MenuAction.NPC_FIRST_OPTION,
 		MenuAction.NPC_SECOND_OPTION,
@@ -133,7 +143,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 
 	private static final Set<String> ESSENCE_MINE_NPCS = ImmutableSet.of(
 		"aubury",
-		"wizard sedridor",
+		"sedridor",
 		"wizard distentor",
 		"wizard cromperty",
 		"brimstail"
@@ -241,6 +251,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 		swap("talk-to", "start-minigame", config::swapStartMinigame);
 		swap("talk-to", ESSENCE_MINE_NPCS::contains, "teleport", config::swapEssenceMineTeleport);
 		swap("talk-to", "collect", config::swapCollectMiscellania);
+		swap("talk-to", "deposit-items", config::swapDepositItems);
 
 		swap("message", "delete", () -> {
 //			System.out.println("shiftmodifer: " + shiftModifier());
@@ -535,28 +546,28 @@ public class MenuEntrySwapperPlugin extends Plugin
 			return;
 		}
 
-		ItemComposition itemComposition = client.getItemDefinition(itemId);
-		String itemName = itemComposition.getName();
-		String option = "Use";
-		int shiftClickActionIndex = itemComposition.getShiftClickActionIndex();
-		String[] inventoryActions = itemComposition.getInventoryActions();
+		ItemComposition itemComposition = itemManager.getItemComposition(itemId);
+		MenuAction shiftClickAction = MenuAction.ITEM_USE;
+		final int shiftClickActionIndex = itemComposition.getShiftClickActionIndex();
 
-		if (shiftClickActionIndex >= 0 && shiftClickActionIndex < inventoryActions.length)
+		if (shiftClickActionIndex >= 0)
 		{
-			option = inventoryActions[shiftClickActionIndex];
+			shiftClickAction = MenuAction.of(MenuAction.ITEM_FIRST_OPTION.getId() + shiftClickActionIndex);
 		}
 
 		MenuEntry[] entries = event.getMenuEntries();
 
 		for (MenuEntry entry : entries)
 		{
-			if (itemName.equals(Text.removeTags(entry.getTarget())))
+			final MenuAction menuAction = MenuAction.of(entry.getType());
+
+			if (ITEM_MENU_TYPES.contains(menuAction) && entry.getIdentifier() == itemId)
 			{
 				entry.setType(MenuAction.RUNELITE.getId());
 
-				if (option.equals(entry.getOption()))
+				if (shiftClickAction == menuAction)
 				{
-					entry.setOption("* " + option);
+					entry.setOption("* " + entry.getOption());
 				}
 			}
 		}
@@ -759,9 +770,9 @@ public class MenuEntrySwapperPlugin extends Plugin
 				return;
 			}
 
-			String option = event.getMenuOption();
-			String target = event.getMenuTarget();
-			ItemComposition itemComposition = client.getItemDefinition(itemId);
+		String option = event.getMenuOption();
+		String target = event.getMenuTarget();
+		ItemComposition itemComposition = itemManager.getItemComposition(itemId);
 
 			if (option.equals(RESET) && target.equals(MENU_TARGET))
 			{

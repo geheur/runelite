@@ -31,7 +31,9 @@ import net.runelite.api.Player;
 import net.runelite.api.Point;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
-import net.runelite.client.Notifier;
+import static net.runelite.client.plugins.grounditems.GroundItemsPlugin.MAX_QUANTITY;
+import net.runelite.client.plugins.grounditems.config.DespawnTimerMode;
+import static net.runelite.client.plugins.grounditems.config.ItemHighlightMode.MENU;
 import net.runelite.client.plugins.grounditems.config.PriceDisplayMode;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.Overlay;
@@ -84,11 +86,6 @@ public class GroundItemsOverlay extends Overlay
 	private final ProgressPieComponent progressPieComponent = new ProgressPieComponent();
 	private final Map<WorldPoint, Integer> offsetMap = new HashMap<>();
 
-	public Map<GroundItem.GroundItemKey, Instant> clueScrollTimers = new HashMap<>();
-
-	@Inject
-	private Notifier notifier;
-
 	@Inject
 	private GroundItemsOverlay(Client client, GroundItemsPlugin plugin, GroundItemsConfig config)
 	{
@@ -112,7 +109,7 @@ public class GroundItemsOverlay extends Overlay
 		final FontMetrics fm = graphics.getFontMetrics();
 		final Player player = client.getLocalPlayer();
 
-		if (player == null || client.getViewportWidget() == null)
+		if (player == null)
 		{
 			return null;
 		}
@@ -121,38 +118,6 @@ public class GroundItemsOverlay extends Overlay
 		final LocalPoint localLocation = player.getLocalLocation();
 		final Point mousePos = client.getMouseCanvasPosition();
 		Collection<GroundItem> groundItemList = plugin.getCollectedGroundItems().values();
-		for (GroundItem groundItem : groundItemList) {
-			if ((!groundItem.getName().toLowerCase().contains("clue scroll") || groundItem.getSpawnTime() == null) || (groundItem.getLootType() != LootType.PVM && groundItem.getLootType() != LootType.DROPPED)) continue;
-			Instant spawnTime = groundItem.getSpawnTime();
-			Instant despawnTime;
-			if (groundItem.getLootType() == LootType.DROPPED)
-			{
-				despawnTime = spawnTime.plus(DESPAWN_TIME_DROP);
-			}
-			else
-			{
-				despawnTime = spawnTime.plus(DESPAWN_TIME_LOOT);
-			}
-			clueScrollTimers.put(new GroundItem.GroundItemKey(groundItem.getItemId(), groundItem.getLocation()), despawnTime);
-		}
-		String s = "";
-		Color color2 = Color.WHITE;
-		Graphics graphics2 = graphics.create();
-		for (Map.Entry<GroundItem.GroundItemKey, Instant> groundItemInstantEntry : clueScrollTimers.entrySet()) {
-			long until = Instant.now().until(groundItemInstantEntry.getValue(), ChronoUnit.SECONDS);
-			s += until + " ";
-			if (until < 20) {
-				notifier.notify("clue scroll despawn timer!");
-				color2 = Color.RED;
-				graphics.setColor(new Color(255, 0, 0, 125));
-				graphics.drawRect(0, 0, 1000, 1000);
-			}
-			if (until < 0) clueScrollTimers.remove(groundItemInstantEntry.getKey());
-		}
-		graphics2.setFont(FontManager.getRunescapeSmallFont().deriveFont(36f));
-		graphics2.setColor(color2);
-		graphics2.drawString(s, 150, 150);
-
 		GroundItem topGroundItem = null;
 
 		if (plugin.isHotKeyPressed())
@@ -209,10 +174,9 @@ public class GroundItemsOverlay extends Overlay
 		plugin.setHighlightBoxBounds(null);
 
 		final boolean onlyShowLoot = config.onlyShowLoot();
-		final boolean groundItemTimers = config.groundItemTimers();
+		final DespawnTimerMode groundItemTimers = config.groundItemTimers();
 		final boolean outline = config.textOutline();
 
-//		System.out.println("bla");
 		for (GroundItem item : groundItemList)
 		{
 			final LocalPoint groundPoint = LocalPoint.fromWorld(client, item.getLocation());
@@ -222,8 +186,6 @@ public class GroundItemsOverlay extends Overlay
 			{
 				continue;
 			}
-
-//			System.out.println("Ground item: " + item.getName() + " " + item.getHeight() + " " + item.getOffset() + " " + item.getQuantity());
 
 			final Color highlighted = plugin.getHighlighted(new NamedQuantity(item), item.getGePrice(), item.getHaPrice());
 			final Color hidden = plugin.getHidden(new NamedQuantity(item), item.getGePrice(), item.getHaPrice(), item.isTradeable());
@@ -310,8 +272,6 @@ public class GroundItemsOverlay extends Overlay
 			final String itemString = itemStringBuilder.toString();
 			itemStringBuilder.setLength(0);
 
-//			System.out.println("  " + groundPoint.getX() + " " + groundPoint.getY() + " " + item.getHeight());
-
 			final Point textPoint = Perspective.getCanvasTextLocation(client,
 				graphics,
 				groundPoint,
@@ -322,12 +282,10 @@ public class GroundItemsOverlay extends Overlay
 			{
 				continue;
 			}
-//			System.out.println("  text: " + textPoint.getX() + " " + textPoint.getY());
 
 			final int offset = plugin.isHotKeyPressed()
 				? item.getOffset()
 				: offsetMap.compute(item.getLocation(), (k, v) -> v != null ? v + 1 : 0);
-//			System.out.println("  offset: " + item.getOffset() + " " + offsetMap.compute(item.getLocation(), (k, v) -> v != null ? v + 1 : 0));
 
 			final int textX = textPoint.getX();
 			final int textY = textPoint.getY() - (STRING_GAP * offset);
@@ -388,9 +346,38 @@ public class GroundItemsOverlay extends Overlay
 				drawRectangle(graphics, itemHighlightBox, topItem && mouseInHighlightBox ? Color.GREEN : color, highlighted != null, false);
 			}
 
-			if (groundItemTimers || plugin.isHotKeyPressed())
+			// When the hotkey is pressed the hidden/highlight boxes are drawn to the right of the text,
+			// so always draw the pie since it is on the left hand side.
+			if (groundItemTimers == DespawnTimerMode.PIE || plugin.isHotKeyPressed())
 			{
-				drawTimerOverlay(graphics, textX, textY, item);
+				drawTimerPieOverlay(graphics, textX, textY, item);
+			}
+			else if (groundItemTimers == DespawnTimerMode.SECONDS || groundItemTimers == DespawnTimerMode.TICKS)
+			{
+				Instant despawnTime = calculateDespawnTime(item);
+				Color timerColor = getItemTimerColor(item);
+				if (despawnTime != null && timerColor != null)
+				{
+					long despawnTimeMillis = despawnTime.toEpochMilli() - Instant.now().toEpochMilli();
+					final String timerText;
+					if (groundItemTimers == DespawnTimerMode.SECONDS)
+					{
+						timerText = String.format(" - %.1f", despawnTimeMillis / 1000f);
+					}
+					else // TICKS
+					{
+						timerText = String.format(" - %d", despawnTimeMillis / 600);
+					}
+
+					// The timer text is drawn separately to have its own color, and is intentionally not included
+					// in the getCanvasTextLocation() call because the timer text can change per frame and we do not
+					// use a monospaced font, which causes the text location on screen to jump around slightly each frame.
+					textComponent.setText(timerText);
+					textComponent.setColor(timerColor);
+					textComponent.setOutline(outline);
+					textComponent.setPosition(new java.awt.Point(textX + fm.stringWidth(itemString), textY));
+					textComponent.render(graphics);
+				}
 			}
 
 			textComponent.setText(itemString);
@@ -403,12 +390,12 @@ public class GroundItemsOverlay extends Overlay
 		return null;
 	}
 
-	private void drawTimerOverlay(Graphics2D graphics, int textX, int textY, GroundItem groundItem)
+	private Instant calculateDespawnTime(GroundItem groundItem)
 	{
 		// We can only accurately guess despawn times for our own pvm loot and dropped items
 		if (groundItem.getLootType() != LootType.PVM && groundItem.getLootType() != LootType.DROPPED)
 		{
-			return;
+			return null;
 		}
 
 		// Loot appears to others after 1 minute, and despawns after 2 minutes
@@ -418,18 +405,17 @@ public class GroundItemsOverlay extends Overlay
 		Instant spawnTime = groundItem.getSpawnTime();
 		if (spawnTime == null)
 		{
-			return;
+			return null;
 		}
 
 		Instant despawnTime;
 		Instant now = Instant.now();
-		Color fillColor;
 		if (client.isInInstancedRegion())
 		{
 			// Items in the Kraken instance appear to never despawn?
 			if (isInKraken())
 			{
-				return;
+				return null;
 			}
 			else if (isInKBDorNMZ())
 			{
@@ -451,7 +437,7 @@ public class GroundItemsOverlay extends Overlay
 					// Dropped items in the NMZ instance appear to never despawn?
 					if (groundItem.getLootType() == LootType.DROPPED)
 					{
-						return;
+						return null;
 					}
 					else
 					{
@@ -463,8 +449,6 @@ public class GroundItemsOverlay extends Overlay
 			{
 				despawnTime = spawnTime.plus(DESPAWN_TIME_INSTANCE);
 			}
-
-			fillColor = PRIVATE_TIMER_COLOR;
 		}
 		else
 		{
@@ -476,21 +460,53 @@ public class GroundItemsOverlay extends Overlay
 			{
 				despawnTime = spawnTime.plus(DESPAWN_TIME_LOOT);
 			}
-
-			// If it has not yet been a minute, the item is private
-			if (spawnTime.plus(1, ChronoUnit.MINUTES).isAfter(now))
-			{
-				fillColor = PRIVATE_TIMER_COLOR;
-			}
-			else
-			{
-				fillColor = PUBLIC_TIMER_COLOR;
-			}
 		}
 
 		if (now.isBefore(spawnTime) || now.isAfter(despawnTime))
 		{
 			// that's weird
+			return null;
+		}
+
+		return despawnTime;
+	}
+
+	private Color getItemTimerColor(GroundItem groundItem)
+	{
+		// We can only accurately guess despawn times for our own pvm loot and dropped items
+		if (groundItem.getLootType() != LootType.PVM && groundItem.getLootType() != LootType.DROPPED)
+		{
+			return null;
+		}
+
+		final Instant spawnTime = groundItem.getSpawnTime();
+		if (spawnTime == null)
+		{
+			return null;
+		}
+
+		final Instant now = Instant.now();
+
+		// If it has not yet been a minute, the item is private
+		if (client.isInInstancedRegion() || spawnTime.plus(1, ChronoUnit.MINUTES).isAfter(now))
+		{
+			return PRIVATE_TIMER_COLOR;
+		}
+		else
+		{
+			return PUBLIC_TIMER_COLOR;
+		}
+	}
+
+	private void drawTimerPieOverlay(Graphics2D graphics, int textX, int textY, GroundItem groundItem)
+	{
+		Instant now = Instant.now();
+		Instant spawnTime = groundItem.getSpawnTime();
+		Instant despawnTime = calculateDespawnTime(groundItem);
+		Color fillColor = getItemTimerColor(groundItem);
+
+		if (spawnTime == null || despawnTime == null || fillColor == null)
+		{
 			return;
 		}
 

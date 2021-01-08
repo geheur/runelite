@@ -259,7 +259,7 @@ public class GroundItemsPlugin extends Plugin
 		Tile tile = itemDespawned.getTile();
 
 		GroundItem.GroundItemKey groundItemKey = new GroundItem.GroundItemKey(item.getId(), tile.getWorldLocation());
-		overlay.clueScrollTimers.remove(groundItemKey);
+//		overlay.clueScrollTimers.remove(groundItemKey);
 		GroundItem groundItem = collectedGroundItems.get(groundItemKey);
 		if (groundItem == null)
 		{
@@ -704,7 +704,7 @@ public class GroundItemsPlugin extends Plugin
 	@Subscribe
 	public void onMenuOptionClicked(MenuOptionClicked menuOptionClicked)
 	{
-		if (menuOptionClicked.getMenuAction() == MenuAction.ITEM_DROP)
+		if (menuOptionClicked.getMenuAction() == MenuAction.ITEM_FIFTH_OPTION)
 		{
 			int itemId = menuOptionClicked.getId();
 			// Keep a queue of recently dropped items to better detect
