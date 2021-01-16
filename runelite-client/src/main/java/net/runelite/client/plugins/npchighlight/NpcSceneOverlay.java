@@ -155,7 +155,8 @@ public class NpcSceneOverlay extends Overlay
 
 		if (config.highlightHull())
 		{
-			Shape objectClickbox = actor.getConvexHull();
+			Perspective.getClickbox(client, actor.getModel(), actor.getOrientation(), actor.getLocalLocation());
+			Shape objectClickbox = Perspective.getClickbox(client, actor.getModel(), actor.getOrientation(), actor.getLocalLocation());//actor.getConvexHull();
 			renderPoly(graphics, color, objectClickbox);
 		}
 

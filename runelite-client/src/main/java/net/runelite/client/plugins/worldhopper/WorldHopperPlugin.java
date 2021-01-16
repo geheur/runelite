@@ -32,9 +32,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.primitives.Ints;
 import com.google.inject.Provides;
+
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.time.Instant;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -331,13 +334,14 @@ public class WorldHopperPlugin extends Plugin
 		int groupId = WidgetInfo.TO_GROUP(event.getActionParam1());
 		String option = event.getOption();
 
-		if (groupId == WidgetInfo.FRIENDS_LIST.getGroupId() || groupId == WidgetInfo.FRIENDS_CHAT.getGroupId())
+		if (true || groupId == WidgetInfo.FRIENDS_LIST.getGroupId() || groupId == WidgetInfo.FRIENDS_CHAT.getGroupId())
 		{
 			boolean after;
 
 			if (AFTER_OPTIONS.contains(option))
 			{
 				after = true;
+//				System.out.println("after = true for " + option);
 			}
 			else if (BEFORE_OPTIONS.contains(option))
 			{
@@ -352,9 +356,11 @@ public class WorldHopperPlugin extends Plugin
 			ChatPlayer player = getChatPlayerFromName(event.getTarget());
 			WorldResult worldResult = worldService.getWorlds();
 
-			if (player == null || player.getWorld() == 0 || player.getWorld() == client.getWorld()
+			boolean sameWorld = player.getWorld() == client.getWorld();
+			if (player == null || player.getWorld() == 0 || (sameWorld && (groupId == WidgetInfo.FRIENDS_LIST.getGroupId() || groupId == WidgetInfo.FRIENDS_CHAT.getGroupId()))
 				|| worldResult == null)
 			{
+//				System.out.println("1 " + player + " " + player.getWorld() + " " + client.getWorld() + " " + worldResult);
 				return;
 			}
 
@@ -363,12 +369,13 @@ public class WorldHopperPlugin extends Plugin
 			if (targetWorld == null || currentWorld == null
 				|| (!currentWorld.getTypes().contains(WorldType.PVP) && targetWorld.getTypes().contains(WorldType.PVP)))
 			{
+//				System.out.println("2 " + targetWorld + " " + currentWorld);
 				// Disable Hop-to a PVP world from a regular world
 				return;
 			}
 
 			final MenuEntry hopTo = new MenuEntry();
-			hopTo.setOption(HOP_TO);
+			hopTo.setOption(sameWorld ? "Same world" : HOP_TO);
 			hopTo.setTarget(event.getTarget());
 			hopTo.setType(MenuAction.RUNELITE.getId());
 			hopTo.setParam0(event.getActionParam0());
@@ -649,6 +656,22 @@ public class WorldHopperPlugin extends Plugin
 		{
             int desiredWorld = Integer.parseInt(commandExecuted.getArguments()[0]);
 			hop(desiredWorld);
+		}
+		else if ("world".equals(commandExecuted.getCommand()))
+		{
+			WorldResult worldResult = worldService.getWorlds();
+			World world = worldResult.findWorld(client.getWorld());
+
+
+			Integer p = storedPings.get(world.getId());
+			String ping = (p == null) ? "" : p.toString();
+			final ChatMessageBuilder message = new ChatMessageBuilder()
+					.append(new Color(0x313131), "You are in world ")
+					.append(new Color(0x313131), "You are in world ")
+					.append("Price of ")
+					.append(ChatColorType.HIGHLIGHT);
+			client.addChatMessage(ChatMessageType.CONSOLE, "", "You are in world " + world.getId() + " (" + world.getRegion() + ") " + ping + "ms", "");
+			System.out.println("current world: " + currentWorld);
 		}
 	}
 

@@ -65,8 +65,9 @@ public class RuneLiteProperties
 
 	public static String getVersion()
 	{
-	    System.out.println("version is " + properties.getProperty(RUNELITE_VERSION));
-		return properties.getProperty(RUNELITE_VERSION);
+//	    System.out.println("version is " + properties.getProperty(RUNELITE_VERSION));
+		return "1.6.36";
+//		return properties.getProperty(RUNELITE_VERSION);
 	}
 
 	public static String getDiscordInvite()

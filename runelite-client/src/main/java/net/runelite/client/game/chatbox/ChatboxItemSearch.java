@@ -162,7 +162,8 @@ public class ChatboxItemSearch extends ChatboxTextInput
 
 			item.setOnOpListener((JavaScriptCallback) ev ->
 			{
-				if (onItemSelected != null)
+				System.out.println(ev.getOp() + " " + ev.getOpbase());
+
 				{
 					onItemSelected.accept(itemComposition.getId());
 				}

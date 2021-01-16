@@ -29,29 +29,18 @@ package net.runelite.client.plugins.banktags;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Shorts;
 import com.google.inject.Provides;
+
+import java.awt.*;
+import java.awt.Point;
 import java.awt.event.MouseWheelEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import net.runelite.api.Client;
-import net.runelite.api.InventoryID;
-import net.runelite.api.Item;
-import net.runelite.api.ItemComposition;
-import net.runelite.api.ItemContainer;
-import net.runelite.api.KeyCode;
-import net.runelite.api.MenuAction;
-import net.runelite.api.MenuEntry;
-import net.runelite.api.ScriptID;
-import net.runelite.api.SpriteID;
-import net.runelite.api.VarClientStr;
+
+import net.runelite.api.*;
 import net.runelite.api.events.DraggingWidgetChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.GrandExchangeSearched;
@@ -61,6 +50,7 @@ import net.runelite.api.events.ScriptCallbackEvent;
 import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.ScriptPreFired;
 import net.runelite.api.events.WidgetLoaded;
+import net.runelite.api.widgets.JavaScriptCallback;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetID;
 import net.runelite.api.widgets.WidgetInfo;
@@ -486,6 +476,13 @@ public class BankTagsPlugin extends Plugin implements MouseWheelListener
 	@Subscribe
 	public void onScriptPostFired(ScriptPostFired event)
 	{
+		if (event.getScriptId() == ScriptID.BANKMAIN_BUILD)
+		{
+			TagTab activeTab = tabInterface.getActiveTab();
+			if (activeTab != null) {
+				applyCustomBankTagItemPositions(activeTab);
+			}
+		}
 		if (event.getScriptId() == ScriptID.BANKMAIN_SEARCHING)
 		{
 			// The return value of bankmain_searching is on the stack. If we have a tag tab active
@@ -565,6 +562,152 @@ public class BankTagsPlugin extends Plugin implements MouseWheelListener
 				WidgetInfo.BANK_ITEM_CONTAINER.getId(),
 				itemContainerScroll));
 
+	}
+
+	public static Widget lastDraggedOnWidget = null;
+
+	private void applyCustomBankTagItemPositions(TagTab activeTab) {
+		Widget[] bankItems = client.getWidget(WidgetInfo.BANK_ITEM_CONTAINER).getDynamicChildren();
+		Map<Integer, Widget> itemIdToWidget = new HashMap<>();
+//		System.out.println("modifying. number of children: " + bankItems.length);
+
+		String bankTagName = activeTab.getTag();
+		Map<Integer, Integer> itemPositionIndexes = getBankOrder(bankTagName);
+
+		for (Widget bankItem : bankItems) {
+			if (bankItem.isHidden()) continue;
+			int itemId = bankItem.getItemId();
+			if (itemId < 0) continue; // item id -1 is used for something but idk what. It's not an item so I don't want it.
+			itemId = getNonPlaceholderId(itemId);
+
+			itemIdToWidget.put(itemId, bankItem);
+
+			bankItem.setOnDragCompleteListener((JavaScriptCallback) (ev) -> {
+				customBankTagOrderInsert(bankTagName, ev.getSource().getItemId(), (lastDraggedOnWidget == null) ? -2 : lastDraggedOnWidget.getItemId());
+			});
+
+			// TODO remove items that were deleted from the bank tag? Wouldn't go in here because items not in bank but in the bank tab will show up here, but it's something to think about for the future.
+            // This is also a problem if you remove an item, drag another item to its position, and re-add the item. It will show up on top of the other item.
+			if (!itemPositionIndexes.containsKey(itemId)) {
+				assignPosition(itemPositionIndexes, itemId);
+			}
+		}
+		System.out.println("tag items: " + itemPositionIndexes.toString());
+
+		setItemPositions(itemPositionIndexes);
+		configManager.setConfiguration(CONFIG_GROUP, "custom_banktagorder_" + bankTagName, bankTagOrderMapToString(itemPositionIndexes));
+		System.out.println("saved tag " + bankTagName);
+	}
+
+	private Map<Integer, Integer> getBankOrder(String bankTagName) {
+		String configuration = configManager.getConfiguration(CONFIG_GROUP, "custom_banktagorder_" + bankTagName);
+		return (configuration == null) ? new HashMap<>() : bankTagOrderStringToMap(configuration);
+	}
+
+	private String bankTagOrderMapToString(Map<Integer, Integer> itemPositionMap) {
+	    StringBuilder sb = new StringBuilder();
+		for (Map.Entry<Integer, Integer> integerIntegerEntry : itemPositionMap.entrySet()) {
+			sb.append(integerIntegerEntry.getKey() + ":" + integerIntegerEntry.getValue() + ",");
+		}
+		if (sb.length() > 0) {
+			sb.delete(sb.length() - 1, sb.length());
+		}
+		return sb.toString();
+	}
+
+	private Map<Integer, Integer> bankTagOrderStringToMap(String s) {
+	    Map<Integer, Integer> map = new HashMap<>();
+		for (String s1 : s.split(",")) {
+			String[] split = s1.split(":");
+			map.put(Integer.valueOf(split[0]), Integer.valueOf(split[1]));
+		}
+		return map;
+	}
+
+	private void setItemPositions(Map<Integer, Integer> itemPositionIndexes) {
+		Widget container = client.getWidget(WidgetInfo.BANK_ITEM_CONTAINER);
+		for (Widget child : container.getDynamicChildren()) {
+			int itemId = getNonPlaceholderId(child.getItemId());
+			Integer integer = itemPositionIndexes.get(itemId);
+			if (integer == null) {
+				// This hides things like the tab dividers and those weird spacer things that occupy the empty space. These can interfere with dragging.
+				child.setHidden(true);
+				child.revalidate();
+				continue;
+			}
+			// TODO (unrelated to the surrounding code) show on bank item when it's in your inventory or equipped. This is good for items that I have multiple of - it'll be easier to tell if I have the item withdrawn already. For items I already have 1 of, placeholders fulfill this purpose.
+			child.setOriginalX((integer % 8) * 48 + 51);
+			child.setOriginalY((integer / 8) * 36);
+			child.revalidate();
+		}
+		container.setScrollHeight(2000);
+		final int itemContainerScroll = container.getScrollY();
+		clientThread.invokeLater(() ->
+				client.runScript(ScriptID.UPDATE_SCROLLBAR,
+						WidgetInfo.BANK_SCROLLBAR.getId(),
+						WidgetInfo.BANK_ITEM_CONTAINER.getId(),
+						itemContainerScroll));
+	}
+
+	private int getNonPlaceholderId(int id) {
+		ItemComposition itemComposition = itemManager.getItemComposition(id);
+		return (itemComposition.getPlaceholderTemplateId() == 14401) ? itemComposition.getPlaceholderId() : id;
+	}
+
+	private void customBankTagOrderInsert(String bankTagName, int draggedItemId, int draggedOnItemId) {
+	    draggedItemId = getNonPlaceholderId(draggedItemId);
+		draggedOnItemId = getNonPlaceholderId(draggedOnItemId);
+		net.runelite.api.Point mouseCanvasPosition = client.getMouseCanvasPosition();
+		Widget container = client.getWidget(WidgetInfo.BANK_ITEM_CONTAINER);
+		net.runelite.api.Point point = new net.runelite.api.Point(mouseCanvasPosition.getX() - container.getCanvasLocation().getX(), mouseCanvasPosition.getY() - container.getCanvasLocation().getY());
+		System.out.println("mouse canvas position: " + mouseCanvasPosition + " bank widget canvas position: " + container.getCanvasLocation());
+		System.out.println("bank container relative position: " + point);
+//		System.out.println("mouse drag complete " + draggedItemId + " " + draggedOnItemId + " " + ((lastDraggedOnWidget == null) ? "null" : lastDraggedOnWidget.getItemId()) + " " + ((draggedWidget == null) ? "null" : draggedWidget.getItemId()));
+
+		Map<Integer, Integer> itemIdToIndexes = getBankOrder(bankTagName);
+
+		int row = (point.getY() + container.getScrollY()) / 36;
+		int col = (point.getX() - 51) / 48;
+		System.out.println("row col " + row + " " + col + " " + row * 8 + col);
+		Integer draggedOnItemIndex = (lastDraggedOnWidget != null) ? itemIdToIndexes.get(draggedOnItemId) : row * 8 + col;
+		System.out.println("dragged on item index is " + draggedOnItemIndex);
+		System.out.println("dragged on item id: " + draggedOnItemId + " " + draggedItemId);
+		Integer draggedItemIndex = itemIdToIndexes.get(draggedItemId);
+		if (draggedOnItemIndex == null) {
+			System.out.println("DRAGGED ON ITEM WAS NULL " + lastDraggedOnWidget.getName());
+		}
+		if (draggedItemIndex == null) {
+			System.out.println("DRAGGED ITEM WAS NULL");
+		}
+
+//		boolean isInsert = client.getVar(Varbits.BANK_REARRANGE_MODE) == 1;
+//		if (isInsert) {
+//			Integer index = itemIdToIndexes.get(draggedOnItemId);
+//		} else {
+			itemIdToIndexes.put(draggedItemId, draggedOnItemIndex);
+			itemIdToIndexes.put(draggedOnItemId, draggedItemIndex);
+			configManager.setConfiguration(CONFIG_GROUP, "custom_banktagorder_" + bankTagName, bankTagOrderMapToString(itemIdToIndexes));
+			System.out.println("saved tag " + bankTagName);
+//		}
+
+		System.out.println("tag items: " + itemIdToIndexes.toString());
+
+		setItemPositions(itemIdToIndexes);
+	}
+
+	private static void assignPosition(Map<Integer, Integer> itemPositionIndexes, int itemId) {
+		int smallestIndex = 0;
+		ArrayList<Integer> integers = new ArrayList<>(itemPositionIndexes.values());
+		integers.sort(Integer::compare);
+		for (Integer integer : integers) {
+			if (smallestIndex == integer) {
+				smallestIndex++;
+			} else if (integer > smallestIndex) {
+				break;
+			}
+		}
+		System.out.println("assigning position for item " + itemId + " to " + smallestIndex);
+		itemPositionIndexes.put(itemId, smallestIndex);
 	}
 
 	@Subscribe

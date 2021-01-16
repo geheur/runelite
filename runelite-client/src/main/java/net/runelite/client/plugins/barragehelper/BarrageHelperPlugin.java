@@ -169,6 +169,10 @@ public class BarrageHelperPlugin extends Plugin
 					.replaceAll("Cow", "Moomoo UwU")
 					.replaceAll("General Graardor", "General Garage Door")
 					.replaceAll("Crafting", "Glassblowing")
+					.replaceAll("Verzik Vitur", "The Fat Lady")
+					.replaceAll("Pestilent Bloat", "Slob")
+					.replaceAll("Sotetseg", "Daddy Big Fat Melees")
+					.replaceAll("The Maiden of Sugadinti", "They're called spiders, not crabs")
 			;
 			menuEntry.setTarget(target);
         }

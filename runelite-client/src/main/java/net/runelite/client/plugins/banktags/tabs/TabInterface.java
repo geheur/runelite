@@ -86,9 +86,9 @@ import net.runelite.client.game.chatbox.ChatboxPanelManager;
 import net.runelite.client.plugins.bank.BankSearch;
 import net.runelite.client.plugins.banktags.BankTagsConfig;
 import net.runelite.client.plugins.banktags.BankTagsPlugin;
-import static net.runelite.client.plugins.banktags.BankTagsPlugin.TAG_SEARCH;
-import static net.runelite.client.plugins.banktags.BankTagsPlugin.VAR_TAG_SUFFIX;
 import net.runelite.client.plugins.banktags.TagManager;
+
+import static net.runelite.client.plugins.banktags.BankTagsPlugin.*;
 import static net.runelite.client.plugins.banktags.tabs.MenuIndexes.NewTab;
 import static net.runelite.client.plugins.banktags.tabs.MenuIndexes.Tab;
 import net.runelite.client.ui.JagexColors;
@@ -721,6 +721,13 @@ public class TabInterface
 		if (draggedWidget.getId() == WidgetInfo.BANK_ITEM_CONTAINER.getId() && isActive()
 			&& config.preventTagTabDrags())
 		{
+			BankTagsPlugin.lastDraggedOnWidget = client.getDraggedOnWidget();
+			if (lastDraggedOnWidget == null) {
+
+				System.out.println("last draggon on widget was: null");
+			} else {
+				System.out.println("last draggon on widget was: " + lastDraggedOnWidget.getName() + " " + lastDraggedOnWidget.getItemId() + " " + lastDraggedOnWidget.getId());
+			}
 			client.setDraggedOnWidget(null);
 		}
 

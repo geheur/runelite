@@ -341,7 +341,7 @@ public class BoostsPlugin extends Plugin
 	 *
 	 * @return integer value in ticks until next boost change
 	 */
-	int getChangeDownTicks()
+	public int getChangeDownTicks()
 	{
 		if (lastChangeDown == -1 ||
 				config.displayNextBuffChange() == BoostsConfig.DisplayChangeMode.NEVER ||
@@ -369,7 +369,7 @@ public class BoostsPlugin extends Plugin
 	 *
 	 * @return integer value in ticks until next stat restoration up
 	 */
-	int getChangeUpTicks()
+	public int getChangeUpTicks()
 	{
 		if (lastChangeUp == -1 ||
 				config.displayNextDebuffChange() == BoostsConfig.DisplayChangeMode.NEVER ||
@@ -388,7 +388,7 @@ public class BoostsPlugin extends Plugin
 	 * @param time tick-based time
 	 * @return second-based time
 	 */
-	int getChangeTime(final int time)
+	public int getChangeTime(final int time)
 	{
 		final long diff = System.currentTimeMillis() - lastTickMillis;
 		return time != -1 ? (int)((time * Constants.GAME_TICK_LENGTH - diff) / 1000d) : time;

@@ -121,6 +121,17 @@ public class FairyRingPlugin extends Plugin
 	@Subscribe
 	public void onWidgetLoaded(WidgetLoaded widgetLoaded)
 	{
+//		if (widgetLoaded.getGroupId() == WidgetID.BANK_GROUP_ID) {
+//			System.out.println("loaded");
+//			Widget w = client.getWidget(12, 12);
+//			Widget[] dynamicChildren = w.getDynamicChildren();
+//			Widget t = dynamicChildren[1];
+//			if (dynamicChildren[636].getItemId() != 1377) {
+//				System.out.println("switching");
+//				dynamicChildren[1] = dynamicChildren[636];
+//				dynamicChildren[636] = t;
+//			}
+//		}
 		if (widgetLoaded.getGroupId() == WidgetID.FAIRY_RING_PANEL_GROUP_ID)
 		{
 			setWidgetTextToDestination();

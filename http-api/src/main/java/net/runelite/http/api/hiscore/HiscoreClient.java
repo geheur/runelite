@@ -169,6 +169,7 @@ public class HiscoreClient
 				break; // rest is other things?
 			}
 
+			System.out.println(record.toString());
 			// rank, level, experience
 			int rank = Integer.parseInt(record.get(0));
 			int level = Integer.parseInt(record.get(1));

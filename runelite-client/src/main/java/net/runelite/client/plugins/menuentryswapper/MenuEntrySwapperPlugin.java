@@ -267,6 +267,8 @@ public class MenuEntrySwapperPlugin extends Plugin
 
 		swap("open", "hardwood grove doors", "quick-pay(100)", config::swapHardWoodGrove);
 
+		swap("wear", "magic cape(t)", "spellbook", () -> true);
+
 		swap("inspect", "trapdoor", "travel", config::swapTravel);
 		swap("board", "travel cart", "pay-fare", config::swapTravel);
 
@@ -362,7 +364,10 @@ public class MenuEntrySwapperPlugin extends Plugin
 				"barbarian guard", "amy", "random"
 		).forEach(npc -> swap("cast", "npc contact", npc, () -> shiftModifier() && config.swapNpcContact()));
 
-		swap("value", target -> (target == null) ? false : buyQuantityMap.getOrDefault(target, -1) == 1, "buy 1", () -> true);
+		swap("", (target) -> true, "bank-all", () -> true);
+		swap("", (target) -> true, "follow", () -> true);
+		swap("value", this::swapBuy1Option, "buy-1", () -> true);
+		swap("value", this::swapBuy1Option, "buy 1", () -> true);
 		swap("value", target -> (target == null) ? false : buyQuantityMap.getOrDefault(target, -1) == 5, "buy 5", () -> true);
 		swap("value", target -> (target == null) ? false : buyQuantityMap.getOrDefault(target, -1) == 10, "buy 10", () -> true);
 		swap("value", target -> (target == null) ? false : buyQuantityMap.getOrDefault(target, -1) == 50, "buy 50", () -> true);
@@ -415,6 +420,28 @@ public class MenuEntrySwapperPlugin extends Plugin
 		swapTeleport("camelot teleport", "seers'");
 		swapTeleport("watchtower teleport", "yanille");
 		swapTeleport("teleport to house", "outside");
+	}
+
+	/**
+	 * Has special behavior for the tob chest added in.
+	 */
+	private boolean swapBuy1Option(String target) {
+		System.out.println("buy1option \"" + target + "\"");
+		if (
+				target.equalsIgnoreCase("stamina potion(4)") ||
+				target.equalsIgnoreCase("super restore(4)") ||
+				target.equalsIgnoreCase("saradomin brew(4)") ||
+				target.equalsIgnoreCase("prayer potion(4)") ||
+				target.equalsIgnoreCase("mushroom potato") ||
+				target.equalsIgnoreCase("shark") ||
+				target.equalsIgnoreCase("sea turtle") ||
+				target.equalsIgnoreCase("manta ray")
+		) {
+			System.out.println("returning true");
+			return true;
+		}
+		System.out.println("false");
+		return (target == null) ? false : buyQuantityMap.getOrDefault(target, -1) == 1;
 	}
 
 	private void swap(String option, String swappedOption, Supplier<Boolean> enabled)
@@ -584,7 +611,14 @@ public class MenuEntrySwapperPlugin extends Plugin
 	@Subscribe
 	public void onMenuEntryAdded(MenuEntryAdded menuEntryAdded)
 	{
-//		System.out.println(menuEntryAdded.getOption() + " " + menuEntryAdded.getTarget() + " " + menuEntryAdded.getType() + " " + menuEntryAdded.getActionParam0() + " " + menuEntryAdded.getActionParam1() + " " + menuEntryAdded.getIdentifier());
+//		System.out.println(client.getTickCount() + " " + menuEntryAdded.getOption() + " " + menuEntryAdded.getTarget() + " " + menuEntryAdded.getType() + " " + menuEntryAdded.getActionParam0() + " " + menuEntryAdded.getActionParam1() + " " + menuEntryAdded.getIdentifier());
+//		for (MenuEntry menuEntry : client.getMenuEntries()) {
+//			if (menuEntry.getOption().contains("ithdraw")) {
+//			    int param0 = menuEntry.getParam0();
+//				menuEntry.setParam0(1);
+//				System.out.println(param0 + " contains withdraw " + menuEntry.getParam0());
+//			}
+//		}
 		// 1007 is in bank.
 		if (shiftModifier()) swapBuySell(menuEntryAdded);
 
@@ -810,7 +844,6 @@ public class MenuEntrySwapperPlugin extends Plugin
 			{
 				String operation = matcher.group(1);
 				int quantity = Integer.valueOf(matcher.group(2));
-				System.out.println("here");
 				(("buy".equals(operation)) ? buyQuantityMap : sellQuantityMap).put(Text.removeTags(event.getMenuTarget()).toLowerCase(), quantity);
 			}
 		}
@@ -820,7 +853,6 @@ public class MenuEntrySwapperPlugin extends Plugin
 			if (matcher.matches())
 			{
 				String operation = matcher.group(1);
-				System.out.println("here");
 				(("buy".equals(operation)) ? buyQuantityMap : sellQuantityMap).remove(Text.removeTags(event.getMenuTarget()).toLowerCase());
 			}
 		}
@@ -909,23 +941,23 @@ public class MenuEntrySwapperPlugin extends Plugin
 		if (menuEntries.length >= 2) {
 			MenuEntry menuEntry = menuEntries[menuEntries.length - 2];
 			//		MenuEntry menuEntry = menuEntries[0];
-			System.out.println("menu entry 0 is " + menuEntry.getTarget() + " " + menuEntry.getOption() + " " + menuEntry.getType());
+//			System.out.println("menu entry 0 is " + menuEntry.getTarget() + " " + menuEntry.getOption() + " " + menuEntry.getType());
 			if (menuEntry.getType() == MenuAction.GROUND_ITEM_THIRD_OPTION.getId()) {
 				Boolean unchecked = GroundItemsPlugin.hiddenItems.getUnchecked(new NamedQuantity(Text.removeTags(menuEntry.getTarget()).toLowerCase(), 1));
-				System.out.println("unchecked is " + unchecked);
+//				System.out.println("unchecked is " + unchecked);
 				if (Boolean.TRUE.equals(unchecked)) {
 					for (int i = 0; i < menuEntries.length; i++) {
 						MenuEntry entry = menuEntries[i];
-						System.out.println(i + " " + entry.getType() + " " + entry.getIdentifier() + " " + entry.getTarget() + " " + entry.getOption());
+//						System.out.println(i + " " + entry.getType() + " " + entry.getIdentifier() + " " + entry.getTarget() + " " + entry.getOption());
 						if (entry.getType() == MenuAction.GROUND_ITEM_THIRD_OPTION.getId()) {
 							Boolean isHidden = GroundItemsPlugin.hiddenItems.getUnchecked(new NamedQuantity(entry.getTarget(), 1));
 							if (Boolean.FALSE.equals(isHidden)) {
-								System.out.println("swapping! " + menuEntries[i].getTarget() + " " + menuEntries[i].getOption() + " " + menuEntry.getTarget() + " " + menuEntry.getOption());
+//								System.out.println("swapping! " + menuEntries[i].getTarget() + " " + menuEntries[i].getOption() + " " + menuEntry.getTarget() + " " + menuEntry.getOption());
 								menuEntries[i] = menuEntry;
 								menuEntries[menuEntries.length - 2] = entry;
 								for (int j = 0; j < menuEntries.length; j++) {
 									MenuEntry e = menuEntries[j];
-									System.out.println(j + " " + e.getType() + " " + e.getIdentifier() + " " + e.getTarget() + " " + e.getOption());
+//									System.out.println(j + " " + e.getType() + " " + e.getIdentifier() + " " + e.getTarget() + " " + e.getOption());
 								}
 								break;
 							}

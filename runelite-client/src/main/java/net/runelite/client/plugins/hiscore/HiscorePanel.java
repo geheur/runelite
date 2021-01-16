@@ -40,6 +40,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.swing.ImageIcon;
@@ -210,10 +211,10 @@ public class HiscorePanel extends PluginPanel
 			tab.setToolTipText(endpoint.getName() + " Hiscores");
 			tab.setOnSelectEvent(() ->
 			{
-				if (loading)
-				{
-					return false;
-				}
+//				if (loading)
+//				{
+//					return false;
+//				}
 
 				selectedEndPoint = endpoint;
 				return true;
@@ -227,10 +228,10 @@ public class HiscorePanel extends PluginPanel
 				@Override
 				public void mousePressed(MouseEvent mouseEvent)
 				{
-					if (loading)
-					{
-						return;
-					}
+//					if (loading)
+//					{
+//						return;
+//					}
 
 					lookup();
 				}
@@ -368,6 +369,7 @@ public class HiscorePanel extends PluginPanel
 	private void lookup()
 	{
 		final String lookup = sanitize(searchBar.getText());
+		final HiscoreEndpoint hiscoreEndpoint = selectedEndPoint;
 
 		if (Strings.isNullOrEmpty(lookup))
 		{
@@ -402,10 +404,11 @@ public class HiscorePanel extends PluginPanel
 			selectedEndPoint = HiscoreEndpoint.NORMAL;
 		}
 
-		hiscoreClient.lookupAsync(lookup, selectedEndPoint).whenCompleteAsync((result, ex) ->
+		CompletableFuture<HiscoreResult> hiscoreResultCompletableFuture = hiscoreClient.lookupAsync(lookup, selectedEndPoint);
+		hiscoreResultCompletableFuture.whenCompleteAsync((result, ex) ->
 			SwingUtilities.invokeLater(() ->
 			{
-				if (!sanitize(searchBar.getText()).equals(lookup))
+				if (!sanitize(searchBar.getText()).equals(lookup) || hiscoreEndpoint != selectedEndPoint)
 				{
 					// search has changed in the meantime
 					return;
