@@ -78,10 +78,21 @@ public interface TimeTrackingConfig extends Config
 	}
 
 	@ConfigItem(
+			keyName = "notifyFarmingContract",
+			name = "Notify farming contract",
+			description = "Notifies you when your farming contract is done, regardless of whether that patch has notifications.",
+			position = 5
+	)
+	default boolean notifyFarmingContract()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "defaultTimerMinutes",
 		name = "Default Time",
 		description = "The default time for the timer in minutes",
-		position = 5
+		position = 6
 	)
 	@Units(Units.MINUTES)
 	default int defaultTimerMinutes()
@@ -93,7 +104,7 @@ public interface TimeTrackingConfig extends Config
 		keyName = "sortOrder",
 		name = "Sort Order",
 		description = "The order in which to sort the timers",
-		position = 6
+		position = 7
 	)
 	default SortOrder sortOrder()
 	{
@@ -104,7 +115,7 @@ public interface TimeTrackingConfig extends Config
 		keyName = "timerWarningThreshold",
 		name = "Warning Threshold",
 		description = "The time at which to change the timer color to the warning color",
-		position = 6
+		position = 7
 	)
 	@Units(Units.SECONDS)
 	default int timerWarningThreshold()
