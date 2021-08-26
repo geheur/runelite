@@ -63,6 +63,8 @@ import net.runelite.client.util.LinkBrowser;
 public class InfoPanel extends PluginPanel
 {
 	private static final String RUNELITE_LOGIN = "https://runelite_login/";
+	private static final String REVEAL_EMAIL_URL = "http://reveal.email.dummy.url";
+	private static final String HIDE_EMAIL_URL = "http://hide.email.dummy.url";
 
 	private static final ImageIcon ARROW_RIGHT_ICON;
 	private static final ImageIcon GITHUB_ICON;
@@ -157,6 +159,7 @@ public class InfoPanel extends PluginPanel
 		loggedLabel.setFont(smallFont);
 
 		emailLabel.setForeground(Color.WHITE);
+		emailLabel.setContentType("text/html");
 		emailLabel.setFont(smallFont);
 		emailLabel.enableAutoLinkHandler(false);
 		emailLabel.addHyperlinkListener(e ->
@@ -166,6 +169,14 @@ public class InfoPanel extends PluginPanel
 				if (e.getURL().toString().equals(RUNELITE_LOGIN))
 				{
 					executor.execute(sessionManager::login);
+				}
+				else if (e.getURL().toString().equals(REVEAL_EMAIL_URL))
+				{
+					showEmail();
+				}
+				else if (e.getURL().toString().equals(HIDE_EMAIL_URL))
+				{
+					hideEmail();
 				}
 			}
 		});
@@ -296,18 +307,29 @@ public class InfoPanel extends PluginPanel
 
 		if (name != null)
 		{
-			emailLabel.setContentType("text/plain");
-			emailLabel.setText(name);
 			loggedLabel.setText("Signed in as");
+			hideEmail();
 			actionsContainer.add(syncPanel, 0);
 		}
 		else
 		{
-			emailLabel.setContentType("text/html");
-			emailLabel.setText("<a href=\"" + RUNELITE_LOGIN + "\">Sign in</a> to sync settings to the cloud.");
 			loggedLabel.setText("Not signed in");
+			emailLabel.setText("<a href=\"" + RUNELITE_LOGIN + "\">Sign in</a> to sync settings to the cloud.");
 			actionsContainer.remove(syncPanel);
 		}
+	}
+
+	private void showEmail()
+	{
+		final String name = sessionManager.getAccountSession() != null
+			? sessionManager.getAccountSession().getUsername()
+			: null;
+		emailLabel.setText(name + " <a href=\"" + HIDE_EMAIL_URL + "\">Hide</a>");
+	}
+
+	private void hideEmail()
+	{
+		emailLabel.setText("<a href=\"" + REVEAL_EMAIL_URL + "\">Click to reveal email</a>");
 	}
 
 	private static String htmlLabel(String key, String value)
