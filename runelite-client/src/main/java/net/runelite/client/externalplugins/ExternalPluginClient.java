@@ -40,8 +40,10 @@ import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -78,6 +80,7 @@ public class ExternalPluginClient
 
 	public List<ExternalPluginManifest> downloadManifest() throws IOException, VerificationException
 	{
+		System.out.println("plugin hub version: " + System.getProperty("runelite.pluginhub.version"));
 		HttpUrl manifest = RuneLiteProperties.getPluginHubBase()
 			.newBuilder()
 			.addPathSegments("manifest.js")
@@ -104,10 +107,16 @@ public class ExternalPluginClient
 				throw new VerificationException("Unable to verify external plugin manifest");
 			}
 
-			return gson.fromJson(new String(data, StandardCharsets.UTF_8),
+			List<ExternalPluginManifest> externalPluginManifests = gson.fromJson(new String(data, StandardCharsets.UTF_8),
 				new TypeToken<List<ExternalPluginManifest>>()
 				{
 				}.getType());
+			String[] doNotLoadHubPlugins = ExternalPluginManager.getDoNotLoadHubPlugins();
+			if (doNotLoadHubPlugins != null && doNotLoadHubPlugins.length > 0) {
+				List<String> doNotLoadHubPluginsList = Arrays.asList(doNotLoadHubPlugins);
+				externalPluginManifests = externalPluginManifests.stream().filter(m -> !doNotLoadHubPluginsList.contains(m.getInternalName())).collect(Collectors.toList());
+			}
+			return externalPluginManifests;
 		}
 		catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e)
 		{

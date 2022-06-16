@@ -38,7 +38,9 @@ import java.net.URL;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +53,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.swing.SwingUtilities;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.RuneLite;
 import net.runelite.client.RuneLiteProperties;
@@ -79,6 +82,8 @@ public class ExternalPluginManager
 {
 	private static final String PLUGIN_LIST_KEY = "externalPlugins";
 	private static Class<? extends Plugin>[] builtinExternals = null;
+	@Getter
+	private static String[] doNotLoadHubPlugins = null;
 
 	@Inject
 	@Named("safeMode")
@@ -438,5 +443,10 @@ public class ExternalPluginManager
 		}
 
 		builtinExternals = plugins;
+	}
+
+	public static void doNotLoadExternalPlugin(String... plugins)
+	{
+		doNotLoadHubPlugins = plugins;
 	}
 }
