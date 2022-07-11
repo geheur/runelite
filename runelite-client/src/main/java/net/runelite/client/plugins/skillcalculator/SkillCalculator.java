@@ -394,29 +394,37 @@ class SkillCalculator extends JPanel
 
 	private void onFieldCurrentLevelUpdated()
 	{
-		currentLevel = enforceSkillBounds(uiInput.getCurrentLevelInput());
-		currentXP = Experience.getXpForLevel(currentLevel);
+		int newCurrentLevel = enforceSkillBounds(uiInput.getCurrentLevelInput());
+		if (newCurrentLevel == currentLevel) return;
+		currentLevel = newCurrentLevel;
+		currentXP = Experience.getXpForLevel(this.currentLevel);
 		updateInputFields();
 	}
 
 	private void onFieldCurrentXPUpdated()
 	{
-		currentXP = enforceXPBounds(uiInput.getCurrentXPInput());
-		currentLevel = Experience.getLevelForXp(currentXP);
+		int newCurrentXP = enforceXPBounds(uiInput.getCurrentXPInput());
+		if (newCurrentXP == currentXP) return;
+		currentXP = newCurrentXP;
+		currentLevel = Experience.getLevelForXp(this.currentXP);
 		updateInputFields();
 	}
 
 	private void onFieldTargetLevelUpdated()
 	{
-		targetLevel = enforceSkillBounds(uiInput.getTargetLevelInput());
-		targetXP = Experience.getXpForLevel(targetLevel);
+		int newTargetLevel = enforceSkillBounds(uiInput.getTargetLevelInput());
+		if (newTargetLevel == targetLevel) return;
+		targetLevel = newTargetLevel;
+		targetXP = Experience.getXpForLevel(this.targetLevel);
 		updateInputFields();
 	}
 
 	private void onFieldTargetXPUpdated()
 	{
-		targetXP = enforceXPBounds(uiInput.getTargetXPInput());
-		targetLevel = Experience.getLevelForXp(targetXP);
+		int newTargetXP = enforceXPBounds(uiInput.getTargetXPInput());
+		if (newTargetXP == targetXP) return;
+		targetXP = newTargetXP;
+		targetLevel = Experience.getLevelForXp(this.targetXP);
 		updateInputFields();
 	}
 
