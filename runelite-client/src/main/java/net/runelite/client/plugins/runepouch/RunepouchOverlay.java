@@ -29,6 +29,10 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.ItemID;
@@ -49,14 +53,16 @@ import net.runelite.client.util.ColorUtil;
 
 class RunepouchOverlay extends WidgetItemOverlay
 {
-	private static final int NUM_SLOTS = 3; // change this for toa
+	private static final int NUM_SLOTS = 4; // change this for toa
 	private static final int[] AMOUNT_VARBITS = {
-		Varbits.RUNE_POUCH_AMOUNT1, Varbits.RUNE_POUCH_AMOUNT2, Varbits.RUNE_POUCH_AMOUNT3, Varbits.RUNE_POUCH_AMOUNT4
+		Varbits.RUNE_POUCH_AMOUNT1, Varbits.RUNE_POUCH_AMOUNT2, Varbits.RUNE_POUCH_AMOUNT3, Varbits.RUNE_POUCH_AMOUNT3
 	};
 	private static final int[] RUNE_VARBITS = {
-		Varbits.RUNE_POUCH_RUNE1, Varbits.RUNE_POUCH_RUNE2, Varbits.RUNE_POUCH_RUNE3, Varbits.RUNE_POUCH_RUNE4
+		Varbits.RUNE_POUCH_RUNE1, Varbits.RUNE_POUCH_RUNE2, Varbits.RUNE_POUCH_RUNE3, Varbits.RUNE_POUCH_RUNE3
 	};
 	private static final Dimension IMAGE_SIZE = new Dimension(11, 11);
+
+	private Map<Integer, BufferedImage> midrifImages = new HashMap<>();
 
 	private final Client client;
 	private final RunepouchConfig config;
@@ -176,6 +182,23 @@ class RunepouchOverlay extends WidgetItemOverlay
 			BufferedImage image = getRuneImage(rune);
 			if (image != null)
 			{
+				BufferedImage runeImg = null;
+				try
+				{
+					runeImg = ImageIO.read(this.getClass().getResourceAsStream("background" + ".png"));
+				}
+				catch (IOException e)
+				{
+					e.printStackTrace();
+				}
+				System.out.println("rendering background");
+				OverlayUtil.renderImageLocation(graphics,
+					new Point(
+						location.getX() - 1,
+						location.getY() + graphics.getFontMetrics().getHeight() * runeNum - 1
+					),
+					runeImg);
+
 				OverlayUtil.renderImageLocation(graphics,
 					new Point(
 						location.getX() - 1,
@@ -205,6 +228,20 @@ class RunepouchOverlay extends WidgetItemOverlay
 			BufferedImage image = getRuneImage(rune);
 			if (image != null)
 			{
+				BufferedImage runeImg = null;
+				try
+				{
+					runeImg = ImageIO.read(this.getClass().getResourceAsStream("background" + ".png"));
+				}
+				catch (IOException e)
+				{
+					e.printStackTrace();
+				}
+				System.out.println("rendering background");
+				OverlayUtil.renderImageLocation(graphics,
+					new Point(iconX, iconY),
+					runeImg);
+
 				OverlayUtil.renderImageLocation(graphics,
 					new Point(iconX, iconY),
 					image);
@@ -233,22 +270,39 @@ class RunepouchOverlay extends WidgetItemOverlay
 
 	private BufferedImage getRuneImage(RunepouchRune rune)
 	{
-		BufferedImage runeImg = rune.getImage();
+		BufferedImage runeImg = null;//rune.getImage();
 		if (runeImg != null)
 		{
 			return runeImg;
 		}
 
-		runeImg = itemManager.getImage(rune.getItemId());
+//		runeImg = itemManager.getImage(rune.getItemId());
+//		if (runeImg == null)
+//		{
+//			return null;
+//		}
+
+		System.out.println("looking at " + rune);
+		try
+		{
+			String name = rune.name().toLowerCase();
+			String s = name.substring(0, 1).toUpperCase();
+			String s1 = name.substring(1);
+			runeImg = ImageIO.read(this.getClass().getResourceAsStream(s + s1 + ".png"));
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
 		if (runeImg == null)
 		{
+			System.out.println("was null");
 			return null;
 		}
-
-		BufferedImage resizedImg = new BufferedImage(IMAGE_SIZE.width, IMAGE_SIZE.height, BufferedImage.TYPE_INT_ARGB);
-		Graphics2D g = resizedImg.createGraphics();
-		g.drawImage(runeImg, 0, 0, IMAGE_SIZE.width, IMAGE_SIZE.height, null);
-		g.dispose();
+		BufferedImage resizedImg = runeImg;//new BufferedImage(IMAGE_SIZE.width, IMAGE_SIZE.height, BufferedImage.TYPE_INT_ARGB);
+//		Graphics2D g = resizedImg.createGraphics();
+//		g.drawImage(runeImg, 0, 0, IMAGE_SIZE.width, IMAGE_SIZE.height, null);
+//		g.dispose();
 
 		rune.setImage(resizedImg);
 		return resizedImg;
