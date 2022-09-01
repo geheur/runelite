@@ -110,11 +110,12 @@ public class testloginscreenfire
 			blackBluePurpleWhite[i + 192] = 0xffffff;
 		}
 
-		colorPalette = new int[FIRE_HEIGHT]; // L: 50
+		colorPalette = new int[PALETTE_SIZE]; // L: 50
 		fireDataRowIndex = 0; // L: 51
 		spriteData = new int[FIRE_DATA_ARRAY_SIZE]; // L: 52
 		spriteTemporary = new int[FIRE_DATA_ARRAY_SIZE]; // L: 53
 //		method2215((IndexedSprite)null); // L: 54
+		method2215();
 		fireIntensity = new int[FIRE_DATA_ARRAY_SIZE]; // L: 55
 		fireFadeoutTemporary = new int[FIRE_DATA_ARRAY_SIZE]; // L: 56
 	} // L: 57
@@ -162,6 +163,7 @@ public class testloginscreenfire
 		if (fireDataRowIndex > FIRE_DATA_ARRAY_SIZE) { // L: 90
 			fireDataRowIndex -= FIRE_DATA_ARRAY_SIZE; // L: 91
 //			method2215(sprites[(int)(Math.random() * 12.0D)]); // L: 93
+			method2215();
 		}
 
 		// pull data "up" (relative to flame direction) to its new position, in field1225.
@@ -180,7 +182,7 @@ public class testloginscreenfire
 
 		// fill bottom of field1225.
 		// The gutters (10 px on each side) are filled with 0, the pixels inbetween are a 50% chance to be 255 and a 50% chance to be 0.
-		int rightSideMinusTen = FIRE_HEIGHT - 10; // L: 104
+		int rightSideMinusTen = FIRE_WIDTH - 10; // L: 104
 		for (int row = FIRE_HEIGHT - clientTicksSinceLastDraw; row < FIRE_HEIGHT; ++row) { // L: 105
 			int rowIndex = row * FIRE_WIDTH; // L: 106
 
@@ -386,50 +388,49 @@ public class testloginscreenfire
 
 	} // L: 216
 
-//	final void method2215(IndexedSprite var1) {
-//		int var2;
-//		for (var2 = 0; var2 < FIRE_DATA_ARRAY_SIZE; ++var2) { // L: 219
-//			field1233[var2] = 0;
-//		}
-//
-//		int var3;
-//		for (var2 = 0; var2 < 5000; ++var2) { // L: 220
-//			var3 = (int)(Math.random() * 128.0D * 256.0D); // L: 221
-//			field1233[var3] = (int)(Math.random() * 256.0D); // L: 222
-//		}
-//
-//		int var4;
-//		int var5;
-//		for (var2 = 0; var2 < 20; ++var2) { // L: 224
-//			for (var3 = 1; var3 < 255; ++var3) { // L: 225
-//				for (var4 = 1; var4 < 127; ++var4) { // L: 226
-//					var5 = var4 + (var3 << 7); // L: 227
-//					field1230[var5] = (field1233[var5 + 128] + field1233[var5 - 128] + field1233[var5 + 1] + field1233[var5 - 1]) / 4; // L: 228
-//				}
-//			}
-//
-//			int[] var8 = field1233; // L: 231
-//			field1233 = field1230; // L: 232
-//			field1230 = var8; // L: 233
-//		}
-//
-//		if (var1 != null) { // L: 235
-//			var2 = 0; // L: 236
-//
+	final void method2215(/*IndexedSprite var1*/) {
+		for (int i = 0; i < FIRE_DATA_ARRAY_SIZE; ++i) { // L: 219
+			spriteData[i] = 0;
+		}
+
+		int var3;
+		for (int i = 0; i < 5000; ++i) { // L: 220
+			var3 = (int)(Math.random() * 128.0D * 256.0D); // L: 221
+			spriteData[var3] = (int)(Math.random() * 256.0D); // L: 222
+		}
+
+		int var4;
+		int var5;
+		for (int i = 0; i < 20; ++i) { // L: 224
+			for (var3 = 1; var3 < 255; ++var3) { // L: 225
+				for (var4 = 1; var4 < 127; ++var4) { // L: 226
+					var5 = var4 + (var3 << 7); // L: 227
+					spriteTemporary[var5] = (spriteData[var5 + 128] + spriteData[var5 - 128] + spriteData[var5 + 1] + spriteData[var5 - 1]) / 4; // L: 228
+				}
+			}
+
+			int[] var8 = spriteData; // L: 231
+			spriteData = spriteTemporary; // L: 232
+			spriteTemporary = var8; // L: 233
+		}
+
+		if (false/*var1 != null*/) { // L: 235
+			int var2 = 0; // L: 236
+
 //			for (var3 = 0; var3 < var1.subHeight; ++var3) { // L: 237
 //				for (var4 = 0; var4 < var1.subWidth; ++var4) { // L: 238
 //					if (var1.pixels[var2++] != 0) { // L: 239
 //						var5 = var4 + var1.xOffset + 16; // L: 240
 //						int var6 = var3 + var1.yOffset + 16; // L: 241
 //						int var7 = var5 + (var6 << 7); // L: 242
-//						field1233[var7] = 0; // L: 243
+//						spriteData[var7] = 0; // L: 243
 //					}
 //				}
 //			}
-//		}
-//
-//	} // L: 248
-//
+		}
+
+	} // L: 248
+
 //	static final IterableNodeHashTable readStringIntParameters(Buffer var0, IterableNodeHashTable var1) {
 //		int var2 = var0.readUnsignedByte(); // L: 16
 //		int var3;
