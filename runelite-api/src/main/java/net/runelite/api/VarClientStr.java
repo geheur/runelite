@@ -33,6 +33,11 @@ package net.runelite.api;
  */
 public final class VarClientStr
 {
+	public static final int TOB_TEAM_MEMBER_NAME_1 = 330;
+	public static final int TOB_TEAM_MEMBER_NAME_2 = 331;
+	public static final int TOB_TEAM_MEMBER_NAME_3 = 332;
+	public static final int TOB_TEAM_MEMBER_NAME_4 = 333;
+	public static final int TOB_TEAM_MEMBER_NAME_5 = 334;
 	public static final int CHATBOX_TYPED_TEXT = 335;
 	public static final int INPUT_TEXT = 359;
 	public static final int PRIVATE_MESSAGE_TARGET = 360;
