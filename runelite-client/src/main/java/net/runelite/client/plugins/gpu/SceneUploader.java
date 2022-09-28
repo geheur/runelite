@@ -122,6 +122,89 @@ class SceneUploader
 		}
 
 		SceneTilePaint sceneTilePaint = tile.getSceneTilePaint();
+		SceneTilePaint finalOriginalTile = sceneTilePaint;
+//		if (sceneTilePaint != null && sceneTilePaint.getTexture() != -1) {
+//
+//			System.out.println(sceneTilePaint.getNeColor());
+//		}
+		if (false && sceneTilePaint != null && sceneTilePaint.getTexture() == -1) sceneTilePaint = new SceneTilePaint()
+		{
+			private SceneTilePaint originalTile = finalOriginalTile;
+			@Override
+			public int getRBG()
+			{
+				return originalTile.getRBG();
+			}
+
+			@Override
+			public int getSwColor()
+			{
+				return 0;//originalTile.getSwColor();
+			}
+
+			@Override
+			public int getSeColor()
+			{
+				return 0;//originalTile.getSeColor();
+			}
+
+			@Override
+			public int getNwColor()
+			{
+				return 0;//originalTile.getNwColor();
+			}
+
+			@Override
+			public int getNeColor()
+			{
+				return 0;//originalTile.getNeColor();
+			}
+
+			@Override
+			public int getTexture()
+			{
+				return 31;//originalTile.getTexture() != -1 ? 31 : -1;
+			}
+
+			private int bufferOffset = finalOriginalTile.getBufferOffset();
+			@Override
+			public int getBufferOffset()
+			{
+				return originalTile.getBufferOffset();
+			}
+
+			@Override
+			public void setBufferOffset(int bufferOffset)
+			{
+				this.bufferOffset = bufferOffset;
+			}
+
+			private int uvBufferOffset = finalOriginalTile.getUvBufferOffset();
+			@Override
+			public int getUvBufferOffset()
+			{
+				return originalTile.getUvBufferOffset();
+			}
+
+			@Override
+			public void setUvBufferOffset(int bufferOffset)
+			{
+				this.uvBufferOffset = uvBufferOffset;
+			}
+
+			private int bufferLen = finalOriginalTile.getBufferLen();
+			@Override
+			public int getBufferLen()
+			{
+				return originalTile.getBufferLen();
+			}
+
+			@Override
+			public void setBufferLen(int bufferLen)
+			{
+				this.bufferLen = bufferLen;
+			}
+		};
 		if (sceneTilePaint != null)
 		{
 			sceneTilePaint.setBufferOffset(offset);
