@@ -84,6 +84,9 @@ public class ItemStatPlugin extends Plugin
 	private ItemStatOverlay overlay;
 
 	@Inject
+	private ItemStatsWidgetItemOverlay widgetItemOverlay;
+
+	@Inject
 	private Client client;
 
 	@Inject
@@ -113,12 +116,14 @@ public class ItemStatPlugin extends Plugin
 	protected void startUp() throws Exception
 	{
 		overlayManager.add(overlay);
+		overlayManager.add(widgetItemOverlay);
 	}
 
 	@Override
 	protected void shutDown() throws Exception
 	{
 		overlayManager.remove(overlay);
+		overlayManager.remove(widgetItemOverlay);
 		clientThread.invokeLater(this::resetGEInventory);
 	}
 
