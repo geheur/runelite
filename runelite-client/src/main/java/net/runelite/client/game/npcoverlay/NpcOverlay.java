@@ -93,8 +93,10 @@ class NpcOverlay extends Overlay
 
 		if (highlightedNpc.isHull())
 		{
-			Shape objectClickbox = actor.getConvexHull();
-			renderPoly(graphics, borderColor, borderWidth, fillColor, objectClickbox);
+			LocalPoint ll = actor.getLocalLocation();
+			Shape clickbox = Perspective.getClickbox(client, actor.getModel(), actor.getCurrentOrientation(), ll.getX(), ll.getY(), Perspective.getTileHeight(client, ll, actor.getWorldLocation().getPlane()));
+			//actor.getConvexHull();
+			renderPoly(graphics, borderColor, borderWidth, fillColor, clickbox);
 		}
 
 		if (highlightedNpc.isTile())
