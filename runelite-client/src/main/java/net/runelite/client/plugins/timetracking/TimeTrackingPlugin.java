@@ -289,7 +289,7 @@ public class TimeTrackingPlugin extends Plugin
 			panel.update();
 		}
 
-		farmingTracker.checkCompletion();
+		farmingTracker.checkCompletion(farmingContractManager);
 	}
 
 	private void updatePanel()

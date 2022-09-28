@@ -107,7 +107,7 @@ public class FarmingTrackerTest
 		);
 		FarmingPatch patch = region.getPatches()[4];
 		patch.setRegion(region);
-		farmingTracker.sendNotification(runeScapeProfile, patchPrediction, patch);
+		farmingTracker.sendNotification(runeScapeProfile, patchPrediction, patch, false);
 	}
 
 	@Test
@@ -125,7 +125,7 @@ public class FarmingTrackerTest
 		);
 		FarmingPatch patch = region.getPatches()[3];
 		patch.setRegion(region);
-		farmingTracker.sendNotification(runeScapeProfile, patchPrediction, patch);
+		farmingTracker.sendNotification(runeScapeProfile, patchPrediction, patch, false);
 
 		verify(notifier).notify("Your Ranarr is ready to harvest in Ardougne.");
 	}

@@ -46,6 +46,8 @@ import net.runelite.api.WidgetNode;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.widgets.WidgetModalMode;
 import net.runelite.client.Notifier;
+import net.runelite.client.chat.ChatColorType;
+import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.RuneScapeProfile;
 import net.runelite.client.config.RuneScapeProfileType;
@@ -485,7 +487,7 @@ public class FarmingTracker
 		}
 	}
 
-	public void checkCompletion()
+	public void checkCompletion(FarmingContractManager farmingContractManager)
 	{
 		List<RuneScapeProfile> rsProfiles = configManager.getRSProfiles();
 		long unixNow = Instant.now().getEpochSecond();
@@ -502,8 +504,9 @@ public class FarmingTracker
 					ProfilePatch profilePatch = new ProfilePatch(patch, profile.getKey());
 					boolean patchNotified = wasNotified.getOrDefault(profilePatch, false);
 					String configKey = patch.notifyConfigKey();
-					boolean shouldNotify = Boolean.TRUE
-						.equals(configManager.getConfiguration(TimeTrackingConfig.CONFIG_GROUP, profile.getKey(), configKey, Boolean.class));
+					boolean isFarmingContract = farmingContractManager.shouldHighlightFarmingTabPanel(patch);
+					boolean shouldNotify = isFarmingContract && config.notifyFarmingContract()
+							|| Boolean.TRUE.equals(configManager.getConfiguration(TimeTrackingConfig.CONFIG_GROUP, profile.getKey(), configKey, Boolean.class));
 					PatchPrediction prediction = predictPatch(patch, profile.getKey());
 
 					if (prediction == null)
@@ -523,7 +526,7 @@ public class FarmingTracker
 
 					if (!firstNotifyCheck && shouldNotify)
 					{
-						sendNotification(profile, prediction, patch);
+						sendNotification(profile, prediction, patch, isFarmingContract);
 					}
 				}
 			}
@@ -532,7 +535,7 @@ public class FarmingTracker
 	}
 
 	@VisibleForTesting
-	void sendNotification(RuneScapeProfile profile, PatchPrediction prediction, FarmingPatch patch)
+	void sendNotification(RuneScapeProfile profile, PatchPrediction prediction, FarmingPatch patch, boolean isFarmingContract)
 	{
 		final RuneScapeProfileType profileType = profile.getType();
 
@@ -583,6 +586,11 @@ public class FarmingTracker
 			.append("Your ")
 			.append(prediction.getProduce().getName());
 
+		if (isFarmingContract)
+		{
+			stringBuilder.append(" (farming contract)");
+		}
+
 		switch (prediction.getCropState())
 		{
 			case HARVESTABLE:
@@ -611,6 +619,14 @@ public class FarmingTracker
 			.append(patch.getRegion().getName())
 			.append('.');
 
+//		final String formattedMessage = new ChatMessageBuilder()
+//				.append(ChatColorType.HIGHLIGHT)
+//				.append(stringBuilder.toString())
+//				.build();
+//		chatMessageManager.queue(QueuedMessage.builder()
+//				.type(ChatMessageType.CONSOLE)
+//				.runeLiteFormattedMessage(formattedMessage)
+//				.build());
 		notifier.notify(stringBuilder.toString());
 	}
 }

@@ -36,9 +36,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import lombok.AccessLevel;
 import lombok.Getter;
+import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.Notifier;
+import net.runelite.client.chat.ChatColorType;
+import net.runelite.client.chat.ChatMessageBuilder;
+import net.runelite.client.chat.ChatMessageManager;
+import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.timetracking.SummaryState;
@@ -57,6 +62,7 @@ public class BirdHouseTracker
 	private final ConfigManager configManager;
 	private final TimeTrackingConfig config;
 	private final Notifier notifier;
+	private final ChatMessageManager chatMessageManager;
 
 	@Getter(AccessLevel.PACKAGE)
 	private final ConcurrentMap<BirdHouseSpace, BirdHouseData> birdHouseData = new ConcurrentHashMap<>();
@@ -73,13 +79,14 @@ public class BirdHouseTracker
 
 	@Inject
 	private BirdHouseTracker(Client client, ItemManager itemManager, ConfigManager configManager,
-		TimeTrackingConfig config, Notifier notifier)
+		TimeTrackingConfig config, Notifier notifier, ChatMessageManager chatMessageManager)
 	{
 		this.client = client;
 		this.itemManager = itemManager;
 		this.configManager = configManager;
 		this.config = config;
 		this.notifier = notifier;
+		this.chatMessageManager = chatMessageManager;
 	}
 
 	public BirdHouseTabPanel createBirdHouseTabPanel()
@@ -182,7 +189,16 @@ public class BirdHouseTracker
 
 			if (Boolean.TRUE.equals(configManager.getRSProfileConfiguration(TimeTrackingConfig.CONFIG_GROUP, TimeTrackingConfig.BIRDHOUSE_NOTIFY, boolean.class)))
 			{
+				final String formattedMessage = new ChatMessageBuilder()
+						.append(ChatColorType.HIGHLIGHT)
+						.append("Your bird houses are ready to be dismantled.")
+						.build();
+				chatMessageManager.queue(QueuedMessage.builder()
+						.type(ChatMessageType.CONSOLE)
+						.runeLiteFormattedMessage(formattedMessage)
+						.build());
 				notifier.notify("Your bird houses are ready to be dismantled.");
+
 			}
 
 			return true;
