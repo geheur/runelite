@@ -443,6 +443,12 @@ public class DevToolsPlugin extends Plugin
 				localPlayer.setSpotAnimFrame(0);
 				break;
 			}
+			case "sfx":
+			{
+				int id = Integer.parseInt(args[0]);
+				client.playSoundEffect(id);
+				break;
+			}
 			case "transform":
 			{
 				int id = Integer.parseInt(args[0]);
