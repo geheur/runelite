@@ -99,59 +99,72 @@ class KeyRemappingListener implements KeyListener
 			// In addition to the above checks, the F-key remapping shouldn't
 			// activate when dialogs are open which listen for number keys
 			// to select options
-			if (config.fkeyRemap() && !plugin.isDialogOpen())
+			if (config.fkeyRemap()/* && !plugin.isDialogOpen() */)
 			{
 				if (config.f1().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_F1;
+					modified.put(e.getKeyCode(), KeyEvent.VK_F1);
+					e.setKeyCode(KeyEvent.VK_F1);
 				}
 				else if (config.f2().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_F2;
+					modified.put(e.getKeyCode(), KeyEvent.VK_F2);
+					e.setKeyCode(KeyEvent.VK_F2);
 				}
 				else if (config.f3().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_F3;
+					modified.put(e.getKeyCode(), KeyEvent.VK_F3);
+					e.setKeyCode(KeyEvent.VK_F3);
 				}
 				else if (config.f4().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_F4;
+					modified.put(e.getKeyCode(), KeyEvent.VK_F4);
+					e.setKeyCode(KeyEvent.VK_F4);
 				}
 				else if (config.f5().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_F5;
+					modified.put(e.getKeyCode(), KeyEvent.VK_F5);
+					e.setKeyCode(KeyEvent.VK_F5);
 				}
 				else if (config.f6().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_F6;
+					modified.put(e.getKeyCode(), KeyEvent.VK_F6);
+					e.setKeyCode(KeyEvent.VK_F6);
 				}
 				else if (config.f7().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_F7;
+					modified.put(e.getKeyCode(), KeyEvent.VK_F7);
+					e.setKeyCode(KeyEvent.VK_F7);
 				}
 				else if (config.f8().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_F8;
+					modified.put(e.getKeyCode(), KeyEvent.VK_F8);
+					e.setKeyCode(KeyEvent.VK_F8);
 				}
 				else if (config.f9().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_F9;
+					modified.put(e.getKeyCode(), KeyEvent.VK_F9);
+					e.setKeyCode(KeyEvent.VK_F9);
 				}
 				else if (config.f10().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_F10;
+					modified.put(e.getKeyCode(), KeyEvent.VK_F10);
+					e.setKeyCode(KeyEvent.VK_F10);
 				}
 				else if (config.f11().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_F11;
+					modified.put(e.getKeyCode(), KeyEvent.VK_F11);
+					e.setKeyCode(KeyEvent.VK_F11);
 				}
 				else if (config.f12().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_F12;
+					modified.put(e.getKeyCode(), KeyEvent.VK_F12);
+					e.setKeyCode(KeyEvent.VK_F12);
 				}
 				else if (config.esc().matches(e))
 				{
-					mappedKeyCode = KeyEvent.VK_ESCAPE;
+					modified.put(e.getKeyCode(), KeyEvent.VK_ESCAPE);
+					e.setKeyCode(KeyEvent.VK_ESCAPE);
 				}
 			}
 
