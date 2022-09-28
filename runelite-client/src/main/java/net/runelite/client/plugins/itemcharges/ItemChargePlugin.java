@@ -145,6 +145,8 @@ public class ItemChargePlugin extends Plugin
 	private static final Pattern BRACELET_OF_CLAY_CHECK_PATTERN = Pattern.compile(
 		"You can mine (\\d{1,2}) more pieces? of soft clay before your bracelet crumbles to dust\\."
 	);
+	private static final Pattern PHARAOH_SCEPTRE_PATTERN = Pattern.compile(
+		"Your sceptre has (\\d+) charges? left\\.");
 
 	private static final int MAX_DODGY_CHARGES = 10;
 	private static final int MAX_BINDING_CHARGES = 16;
@@ -270,6 +272,7 @@ public class ItemChargePlugin extends Plugin
 			Matcher bloodEssenceCheckMatcher = BLOOD_ESSENCE_CHECK_PATTERN.matcher(message);
 			Matcher bloodEssenceExtractMatcher = BLOOD_ESSENCE_EXTRACT_PATTERN.matcher(message);
 			Matcher braceletOfClayCheckMatcher = BRACELET_OF_CLAY_CHECK_PATTERN.matcher(message);
+			Matcher pharaohSceptreMatcher = PHARAOH_SCEPTRE_PATTERN.matcher(message);
 
 			if (message.contains(RING_OF_RECOIL_BREAK_MESSAGE))
 			{
@@ -490,6 +493,10 @@ public class ItemChargePlugin extends Plugin
 				notifier.notify(config.braceletOfClayNotification(), "Your bracelet of clay has crumbled to dust");
 				updateBraceletOfClayCharges(MAX_BRACELET_OF_CLAY_CHARGES);
 			}
+			else if (pharaohSceptreMatcher.find())
+			{
+				updatePharaohsSceptreCharges(Integer.parseInt(pharaohSceptreMatcher.group(1)));
+			}
 		}
 	}
 
@@ -624,6 +631,12 @@ public class ItemChargePlugin extends Plugin
 	private void updateBraceletOfClayCharges(final int value)
 	{
 		setItemCharges(ItemChargeConfig.KEY_BRACELET_OF_CLAY, value);
+		updateInfoboxes();
+	}
+
+	private void updatePharaohsSceptreCharges(final int value)
+	{
+		setItemCharges(ItemChargeConfig.KEY_PHARAOHS_SCEPTRE, value);
 		updateInfoboxes();
 	}
 
