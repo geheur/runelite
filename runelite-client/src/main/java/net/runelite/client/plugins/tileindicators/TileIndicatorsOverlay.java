@@ -93,13 +93,14 @@ public class TileIndicatorsOverlay extends Overlay
 			int fadeoutTime = config.trueTileFadeoutTime();
 			Color color = config.highlightCurrentColor();
 			Color fillColor = config.currentTileFillColor();
-			if (fadeoutTime == 0) // fadeout disabled.
+			if (!config.trueTileFadeout())
 			{
 				renderTile(graphics, playerPosLocal, color, config.currentTileBorderWidth(), fillColor);
 			}
 			else if (timeSinceLastMove < fadeoutTime)
 			{
-				double opacity = (1.0d - Math.pow(timeSinceLastMove / (double) fadeoutTime, 2));
+				// Keep it solid color for 1 game tick, to prevent it from fading out in between ticks.
+				double opacity = timeSinceLastMove <= 30 ? 1.0d : (1.0d - Math.pow((timeSinceLastMove - 30) / (double) (fadeoutTime - 30), 2));
 				renderTile(graphics, playerPosLocal, ColorUtil.colorWithAlpha(color, (int) (opacity * color.getAlpha())), config.currentTileBorderWidth(), ColorUtil.colorWithAlpha(fillColor, (int) (opacity * fillColor.getAlpha())));
 			}
 		}
