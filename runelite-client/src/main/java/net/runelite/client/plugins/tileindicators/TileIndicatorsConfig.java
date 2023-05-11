@@ -204,4 +204,16 @@ public interface TileIndicatorsConfig extends Config
 	{
 		return 2;
 	}
+
+	@ConfigItem(
+		keyName = "trueTileFadeoutTime",
+		name = "Fadeout",
+		description = "Number of client ticks (1/50 of a second) that the true tile is drawn for after moving. Set to 0 to disable fadeout.",
+		position = 5,
+		section = currentTile
+	)
+	default int trueTileFadeoutTime()
+	{
+		return 0; // disabled.
+	}
 }

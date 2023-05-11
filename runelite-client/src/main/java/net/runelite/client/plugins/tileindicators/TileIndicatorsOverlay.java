@@ -39,6 +39,7 @@ import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.OverlayPriority;
 import net.runelite.client.ui.overlay.OverlayUtil;
+import net.runelite.client.util.ColorUtil;
 
 public class TileIndicatorsOverlay extends Overlay
 {
@@ -54,6 +55,9 @@ public class TileIndicatorsOverlay extends Overlay
 		setLayer(OverlayLayer.ABOVE_SCENE);
 		setPriority(OverlayPriority.MED);
 	}
+	
+	private WorldPoint lastPlayerPosition = null;
+	private int lastTimePlayerMoved = 0;
 
 	@Override
 	public Dimension render(Graphics2D graphics)
@@ -80,13 +84,31 @@ public class TileIndicatorsOverlay extends Overlay
 				return null;
 			}
 
+			if (!playerPos.equals(lastPlayerPosition))
+			{
+				lastTimePlayerMoved = client.getGameCycle();
+				lastPlayerPosition = playerPos;
+			}
+
 			final LocalPoint playerPosLocal = LocalPoint.fromWorld(client, playerPos);
 			if (playerPosLocal == null)
 			{
 				return null;
 			}
 
-			renderTile(graphics, playerPosLocal, config.highlightCurrentColor(), config.currentTileBorderWidth(), config.currentTileFillColor());
+			int timeSinceLastMove = client.getGameCycle() - lastTimePlayerMoved;
+			int fadeoutTime = config.trueTileFadeoutTime();
+			Color color = config.highlightCurrentColor();
+			Color fillColor = config.currentTileFillColor();
+			if (fadeoutTime == 0) // fadeout disabled.
+			{
+				renderTile(graphics, playerPosLocal, color, config.currentTileBorderWidth(), fillColor);
+			}
+			else if (timeSinceLastMove < fadeoutTime)
+			{
+				double opacity = (1.0d - Math.pow(timeSinceLastMove / (double) fadeoutTime, 2));
+				renderTile(graphics, playerPosLocal, ColorUtil.colorWithAlpha(color, (int) (opacity * color.getAlpha())), config.currentTileBorderWidth(), ColorUtil.colorWithAlpha(fillColor, (int) (opacity * fillColor.getAlpha())));
+			}
 		}
 
 		return null;
