@@ -45,20 +45,19 @@ public class TileIndicatorsOverlay extends Overlay
 {
 	private final Client client;
 	private final TileIndicatorsConfig config;
+	private final TileIndicatorsPlugin plugin;
 
 	@Inject
-	private TileIndicatorsOverlay(Client client, TileIndicatorsConfig config)
+	private TileIndicatorsOverlay(Client client, TileIndicatorsConfig config, TileIndicatorsPlugin plugin)
 	{
 		this.client = client;
 		this.config = config;
+		this.plugin = plugin;
 		setPosition(OverlayPosition.DYNAMIC);
 		setLayer(OverlayLayer.ABOVE_SCENE);
 		setPriority(OverlayPriority.MED);
 	}
 	
-	private WorldPoint lastPlayerPosition = null;
-	private int lastTimePlayerMoved = 0;
-
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
@@ -78,16 +77,10 @@ public class TileIndicatorsOverlay extends Overlay
 
 		if (config.highlightCurrentTile())
 		{
-			final WorldPoint playerPos = client.getLocalPlayer().getWorldLocation();
+			final WorldPoint playerPos = plugin.getLastPlayerPosition();
 			if (playerPos == null)
 			{
 				return null;
-			}
-
-			if (!playerPos.equals(lastPlayerPosition))
-			{
-				lastTimePlayerMoved = client.getGameCycle();
-				lastPlayerPosition = playerPos;
 			}
 
 			final LocalPoint playerPosLocal = LocalPoint.fromWorld(client, playerPos);
@@ -96,7 +89,7 @@ public class TileIndicatorsOverlay extends Overlay
 				return null;
 			}
 
-			int timeSinceLastMove = client.getGameCycle() - lastTimePlayerMoved;
+			int timeSinceLastMove = client.getGameCycle() - plugin.getLastTimePlayerMoved();
 			int fadeoutTime = config.trueTileFadeoutTime();
 			Color color = config.highlightCurrentColor();
 			Color fillColor = config.currentTileFillColor();
