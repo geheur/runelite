@@ -112,10 +112,7 @@ public class GroundMarkerOverlay extends Overlay
 		}
 
 		Polygon poly = Perspective.getCanvasTilePoly(client, lp);
-		if (poly != null)
-		{
-			OverlayUtil.renderPolygon(graphics, poly, color, new Color(0, 0, 0, config.fillOpacity()), borderStroke);
-		}
+		OverlayUtil.renderPolygonCorners(graphics, poly, color, new Color(0, 0, 0, config.fillOpacity()), borderStroke);
 
 		if (!Strings.isNullOrEmpty(label))
 		{

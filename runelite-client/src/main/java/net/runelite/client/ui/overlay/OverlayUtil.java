@@ -34,6 +34,7 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import net.runelite.api.Actor;
 import net.runelite.api.Client;
@@ -65,6 +66,114 @@ public class OverlayUtil
 		graphics.draw(poly);
 		graphics.setColor(fillColor);
 		graphics.fill(poly);
+		graphics.setStroke(originalStroke);
+	}
+
+	public static void renderPolygonCorners(Graphics2D graphics, Shape poly, Color color, Color fillColor, Stroke borderStroke)
+	{
+		if (!(poly instanceof Polygon)) return;
+		Polygon p = (Polygon) poly;
+		graphics.setColor(color);
+		final Stroke originalStroke = graphics.getStroke();
+
+		graphics.setColor(color);
+		graphics.setStroke(borderStroke);
+		int divisor = 7;
+		for (int i = 0; i < p.npoints; i++)
+		{
+			int ptx = p.xpoints[i];
+			int pty = p.ypoints[i];
+			int prev = (i - 1) < 0 ? 3 : (i - 1);
+			int next = (i + 1) > 3 ? 0 : (i + 1);
+			int ptxN = ((p.xpoints[next]) - ptx) / divisor + ptx;
+			int ptyN = ((p.ypoints[next]) - pty) / divisor + pty;
+			int ptxP = ((p.xpoints[prev]) - ptx) / divisor + ptx;
+			int ptyP = ((p.ypoints[prev]) - pty) / divisor + pty;
+			graphics.drawLine(ptx, pty, ptxN, ptyN);
+			graphics.drawLine(ptx, pty, ptxP, ptyP);
+		}
+		graphics.setColor(fillColor);
+		graphics.fill(poly);
+
+		graphics.setStroke(originalStroke);
+	}
+
+	public static void renderPolygonDashed(Graphics2D graphics, Shape poly, Color color, Color fillColor, Stroke borderStroke, int tiles)
+	{
+		if (!(poly instanceof Polygon)) return;
+		Polygon p = (Polygon) poly;
+		graphics.setColor(color);
+		final Stroke originalStroke = graphics.getStroke();
+
+		graphics.setColor(color);
+//		float length = 0;
+//		for (int i = 0; i < p.npoints; i++)
+//		{
+//			int next = i + 1 >= p.npoints ? 0 : i + 1;
+//			float distance = (float) Point2D.distance(p.xpoints[i], p.ypoints[i], p.xpoints[next], p.ypoints[next]);
+//			length += distance;
+//		}
+//		System.out.println(length + " " + dashLength + " " + spaceLength);
+//		graphics.setStroke(borderStroke);
+//		graphics.draw(poly);
+		int divisor = 7 * tiles;
+
+		for (int i = 0; i < p.npoints; i++)
+		{
+			int ptx = p.xpoints[i];
+			int pty = p.ypoints[i];
+			int next = (i + 1) > 3 ? 0 : (i + 1);
+			int ptxN = (p.xpoints[next]) - ptx;
+			int ptyN = (p.ypoints[next]) - pty;
+			float length = (float) Point2D.distance(ptx, pty, ptx + ptxN, pty + ptyN);
+			float dashLength = length * 2f / divisor;
+			float spaceLength = length * 5f / divisor;
+			Stroke s = new BasicStroke(1, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10, new float[]{dashLength, spaceLength}, dashLength / 2);
+			graphics.setStroke(s);
+			graphics.drawLine(ptx, pty, ptx + ptxN, pty + ptyN);
+		}
+
+//		if (poly != null)
+//		{
+//			graphics.setColor(color);
+//			graphics.setStroke(borderStroke);
+//			int divisor = 5;
+//			for (int i = 0; i < poly.npoints; i++)
+//			{
+//				int ptx = poly.xpoints[i];
+//				int pty = poly.ypoints[i];
+//				int prev = (i - 1) < 0 ? 3 : (i - 1);
+//				int next = (i + 1) > 3 ? 0 : (i + 1);
+//				int ptxN = ((poly.xpoints[next]) - ptx) / divisor + ptx;
+//				int ptyN = ((poly.ypoints[next]) - pty) / divisor + pty;
+//				int ptxP = ((poly.xpoints[prev]) - ptx) / divisor + ptx;
+//				int ptyP = ((poly.ypoints[prev]) - pty) / divisor + pty;
+//				graphics.drawLine(ptx, pty, ptxN, ptyN);
+//				graphics.drawLine(ptx, pty, ptxP, ptyP);
+//			}
+//			OverlayUtil.renderPolygon(graphics, poly, color, new Color(0, 0, 0, config.fillOpacity()), borderStroke);
+//		}
+//		for (int i = 0; i < p.npoints; i++)
+//		{
+//			int ptx = p.xpoints[i];
+//			int pty = p.ypoints[i];
+//			int next = (i + 1) > 3 ? 0 : (i + 1);
+//			int ptxN = (p.xpoints[next]) - ptx;
+//			int ptyN = (p.ypoints[next]) - pty;
+//			graphics.drawLine(ptx, pty, ptx + ptxN / divisor, pty + ptyN / divisor);
+//			graphics.drawLine(ptx + ptxN - ptxN / divisor, pty + ptyN - ptyN / divisor, ptx + ptxN, pty + ptyN);
+//			for (int j = 1; j < tiles; j++)
+//			{
+////				System.out.println(j * (1f / tiles) + " " + ptxN / (divisor * 2));
+//				float mult1 = j * (1f / tiles) - (1f / (divisor * 2));
+//				float mult2 = j * (1f / tiles) + (1f / (divisor * 2));
+//				System.out.println(mult1);
+//				graphics.drawLine((int) (ptx + ptxN * mult1), (int) (pty + ptyN * mult1), (int) (ptx + ptxN * mult2), (int) (pty + ptyN * mult2));
+//			}
+//		}
+		graphics.setColor(fillColor);
+		graphics.fill(poly);
+
 		graphics.setStroke(originalStroke);
 	}
 

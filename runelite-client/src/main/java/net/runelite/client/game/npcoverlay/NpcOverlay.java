@@ -113,7 +113,7 @@ class NpcOverlay extends Overlay
 					lp.getX() + Perspective.LOCAL_TILE_SIZE * (size - 1) / 2,
 					lp.getY() + Perspective.LOCAL_TILE_SIZE * (size - 1) / 2);
 				Polygon tilePoly = Perspective.getCanvasTileAreaPoly(client, centerLp, size);
-				renderPoly(graphics, borderColor, borderWidth, fillColor, tilePoly);
+				OverlayUtil.renderPolygonDashed(graphics, tilePoly, borderColor, fillColor, new BasicStroke(borderWidth), npcComposition.getSize());
 			}
 		}
 

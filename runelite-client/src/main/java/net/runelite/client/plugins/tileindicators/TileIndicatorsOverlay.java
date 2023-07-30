@@ -106,6 +106,6 @@ public class TileIndicatorsOverlay extends Overlay
 			return;
 		}
 
-		OverlayUtil.renderPolygon(graphics, poly, color, fillColor, new BasicStroke((float) borderWidth));
+		OverlayUtil.renderPolygonCorners(graphics, poly, color, fillColor, new BasicStroke((float) borderWidth));
 	}
 }
