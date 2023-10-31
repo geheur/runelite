@@ -405,6 +405,7 @@ public class GroundItemsPlugin extends Plugin
 			.location(tile.getWorldLocation())
 			.itemId(realItemId)
 			.quantity(item.getQuantity())
+			.noted(itemComposition.getNote() == 799)
 			.name(itemComposition.getName())
 			.haPrice(alchPrice)
 			.height(tile.getItemLayer().getHeight())
@@ -495,8 +496,8 @@ public class GroundItemsPlugin extends Plugin
 
 			final int gePrice = groundItem.getGePrice();
 			final int haPrice = groundItem.getHaPrice();
-			final Color hidden = getHidden(new NamedQuantity(groundItem.getName(), quantity), gePrice, haPrice, groundItem.isTradeable());
-			final Color highlighted = getHighlighted(new NamedQuantity(groundItem.getName(), quantity), gePrice, haPrice);
+			final Color hidden = getHidden(new NamedQuantity(groundItem.getName(), quantity, groundItem.isNoted()), gePrice, haPrice, groundItem.isTradeable());
+			final Color highlighted = getHighlighted(new NamedQuantity(groundItem.getName(), quantity, groundItem.isNoted()), gePrice, haPrice);
 			final Color color = getItemColor(highlighted, hidden);
 			final boolean canBeRecolored = highlighted != null || (hidden != null && config.recolorMenuHiddenItems());
 

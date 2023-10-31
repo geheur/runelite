@@ -25,9 +25,11 @@
 package net.runelite.client.plugins.grounditems;
 
 import com.google.common.base.Strings;
+import lombok.RequiredArgsConstructor;
 import lombok.Value;
 
 @Value
+@RequiredArgsConstructor
 class ItemThreshold
 {
 	enum Inequality
@@ -36,9 +38,14 @@ class ItemThreshold
 		MORE_THAN
 	}
 
-	private final String itemName;
-	private final int quantity;
-	private final Inequality inequality;
+	String itemName;
+	int quantity;
+	Inequality inequality;
+	Boolean noted;
+
+	public ItemThreshold(String itemName, int quantity, Inequality inequality) {
+		this(itemName, quantity, inequality, null);
+	}
 
 	static ItemThreshold fromConfigEntry(String entry)
 	{
@@ -49,6 +56,15 @@ class ItemThreshold
 
 		Inequality operator = Inequality.MORE_THAN;
 		int qty = 0;
+
+		Boolean noted = null;
+		int colonIndex = entry.indexOf(':');
+		if (colonIndex != -1) {
+			String notedString = entry.substring(0, colonIndex);
+			if (notedString.equals("noted")) noted = true;
+			else if (notedString.equals("unnoted")) noted = false;
+			entry = entry.substring(colonIndex + 1);
+		}
 
 		for (int i = entry.length() - 1; i >= 0; i--)
 		{
@@ -80,7 +96,7 @@ class ItemThreshold
 			break;
 		}
 
-		return new ItemThreshold(entry.trim(), qty, operator);
+		return new ItemThreshold(entry.trim(), qty, operator, noted);
 	}
 
 	boolean quantityHolds(int itemCount)
