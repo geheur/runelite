@@ -31,11 +31,17 @@ import lombok.Value;
 @RequiredArgsConstructor
 class NamedQuantity
 {
-	private final String name;
-	private final int quantity;
+	String name;
+	int quantity;
+	Boolean noted;
+
+	// for test
+	public NamedQuantity(String name, int quantity) {
+		this(name, quantity, false);
+	}
 
 	NamedQuantity(GroundItem groundItem)
 	{
-		this(groundItem.getName(), groundItem.getQuantity());
+		this(groundItem.getName(), groundItem.getQuantity(), groundItem.isNoted());
 	}
 }
