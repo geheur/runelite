@@ -58,7 +58,7 @@ class WildcardMatchLoader extends CacheLoader<NamedQuantity, Boolean>
 		{
 			if (WildcardMatcher.matches(entry.getItemName(), filteredName)
 				&& entry.quantityHolds(key.getQuantity())
-				&& entry.getNoted() == key.getNoted())
+				&& (entry.getNoted() == null || entry.getNoted() == key.getNoted()))
 			{
 				return true;
 			}
