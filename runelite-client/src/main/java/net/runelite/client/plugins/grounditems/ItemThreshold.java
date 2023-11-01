@@ -94,4 +94,17 @@ class ItemThreshold
 			return itemCount > quantity;
 		}
 	}
+
+	public static boolean matchesEntry(String entry, String itemName) {
+		int index = entry.indexOf('<');
+		if (index == -1)
+		{
+			index = entry.indexOf('>');
+		}
+		if (index != -1)
+		{
+			entry = entry.substring(0, index);
+		}
+		return itemName.equalsIgnoreCase(entry);
+	}
 }
