@@ -72,6 +72,26 @@ import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.PluginChanged;
 import net.runelite.client.events.ProfileChanged;
+import net.runelite.client.plugins.account.AccountPlugin;
+import net.runelite.client.plugins.antidrag.AntiDragPlugin;
+import net.runelite.client.plugins.bank.BankPlugin;
+import net.runelite.client.plugins.banktags.BankTagsPlugin;
+import net.runelite.client.plugins.boosts.BoostsPlugin;
+import net.runelite.client.plugins.camera.CameraPlugin;
+import net.runelite.client.plugins.cannon.CannonPlugin;
+import net.runelite.client.plugins.chatcommands.ChatCommandsPlugin;
+import net.runelite.client.plugins.chatfilter.ChatFilterPlugin;
+import net.runelite.client.plugins.chathistory.ChatHistoryPlugin;
+import net.runelite.client.plugins.config.ConfigPlugin;
+import net.runelite.client.plugins.gpu.GpuPlugin;
+import net.runelite.client.plugins.grounditems.GroundItemsPlugin;
+import net.runelite.client.plugins.groundmarkers.GroundMarkerPlugin;
+import net.runelite.client.plugins.idlenotifier.IdleNotifierPlugin;
+import net.runelite.client.plugins.info.InfoPlugin;
+import net.runelite.client.plugins.keyremapping.KeyRemappingPlugin;
+import net.runelite.client.plugins.menuentryswapper.MenuEntrySwapperPlugin;
+import net.runelite.client.plugins.runepouch.RunepouchPlugin;
+import net.runelite.client.plugins.stretchedmode.StretchedModePlugin;
 import net.runelite.client.task.Schedule;
 import net.runelite.client.task.ScheduledMethod;
 import net.runelite.client.task.Scheduler;
@@ -230,6 +250,7 @@ public class PluginManager
 	{
 		List<Plugin> scannedPlugins = new ArrayList<>(plugins);
 		int loaded = 0;
+		long t = System.nanoTime();
 		for (Plugin plugin : scannedPlugins)
 		{
 			try
@@ -260,6 +281,7 @@ public class PluginManager
 		{
 			ReflectUtil.queueInjectorAnnotationCacheInvalidation(plugin.injector);
 		}
+		System.out.println("plugins loaded: " + ((System.nanoTime() - t) / 1_000));
 	}
 
 	public void loadCorePlugins() throws IOException, PluginInstantiationException
@@ -268,8 +290,42 @@ public class PluginManager
 		ClassPath classPath = ClassPath.from(getClass().getClassLoader());
 
 		List<Class<?>> plugins = classPath.getTopLevelClassesRecursive(PLUGIN_PACKAGE).stream()
+			.filter(p -> {
+				String s = p.getSimpleName();
+				System.out.println(p.getName());
+//				if (
+//						!s.equals("InfoPlugin") &&
+//						!s.equals("GroundMarkerPlugin") &&
+//						!s.equals("GroundItemsPlugin") &&
+//						!s.equals("BankTagsPlugin") &&
+////						!s.equals("IdleNotifierPlugin") &&
+//						!s.equals("MenuEntrySwapperPlugin") &&
+//						!s.equals("AccountPlugin") &&
+//						!s.equals("AntiDragPlugin") &&
+//						!s.equals("BankPlugin") &&
+////						!s.equals("BoostsPlugin") &&
+//						!s.equals("CameraPlugin") &&
+//						!s.equals("ChatCommandsPlugin") &&
+//						!s.equals("ChatHistoryPlugin") &&
+//						!s.equals("ChatFilterPlugin") &&
+//						!s.equals("CannonPlugin") &&
+//						!s.equals("ConfigPlugin") &&
+//						!s.equals("StretchedModePlugin") &&
+//						!s.equals("GpuPlugin") &&
+//						!s.equals("KeyRemappingPlugin") &&
+//						!s.equals("RunepouchPlugin") &&
+//						!s.equals("MetronomePlugin") &&
+//						true
+//				)
+//				{
+//					return false;
+//				}
+				System.out.println("loading plugin " + p.getSimpleName());
+				return true;
+			})
 			.map(ClassInfo::load)
 			.collect(Collectors.toList());
+		System.out.println("plugin count: " + plugins.size());
 
 		loadPlugins(plugins, (loaded, total) ->
 			SplashScreen.stage(.60, .70, null, "Loading plugins", loaded, total, false));

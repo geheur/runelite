@@ -108,8 +108,8 @@ class RunepouchOverlay extends WidgetItemOverlay
 			return;
 		}
 
-		final int[] runeIds = new int[NUM_SLOTS];
-		final int[] amounts = new int[NUM_SLOTS];
+		final int[] runeIds = new int[6];
+		final int[] amounts = new int[6];
 		final EnumComposition runepouchEnum = client.getEnum(EnumID.RUNEPOUCH_RUNE);
 		int num = 0;
 
@@ -128,6 +128,19 @@ class RunepouchOverlay extends WidgetItemOverlay
 				++num;
 			}
 		}
+		num = 6;
+		runeIds[0] = 1;
+		runeIds[1] = 2;
+		runeIds[2] = 3;
+		runeIds[3] = 4;
+		runeIds[4] = 5;
+		runeIds[5] = 6;
+		amounts[0] = 500;
+		amounts[1] = 6000;
+		amounts[2] = 1000;
+		amounts[3] = 4000;
+		amounts[4] = 10000;
+		amounts[5] = 12000;
 
 		if (num == 0)
 		{
@@ -216,7 +229,7 @@ class RunepouchOverlay extends WidgetItemOverlay
 	private void renderGrid(Graphics2D graphics, WidgetItem widgetItem, int[] runeIds, int[] amounts)
 	{
 		final Point location = widgetItem.getCanvasLocation();
-		for (int i = 0; i < NUM_SLOTS; ++i)
+		for (int i = 0; i < 6; ++i)
 		{
 			final int runeId = runeIds[i];
 			final int amount = amounts[i];
@@ -226,8 +239,10 @@ class RunepouchOverlay extends WidgetItemOverlay
 				continue;
 			}
 
-			final int iconX = location.getX() + 2 + (i == 1 || i == 3 ? IMAGE_SIZE + 2 /* pad */ + 2 /* bar offset */ : 0);
-			final int iconY = location.getY() + 5 + (i >= 2 ? IMAGE_SIZE + 2 /* pad */ : 0);
+			final int iconX = location.getX() + 2 + (i == 1 || i == 3 || i == 5 ? IMAGE_SIZE + 2 /* pad */ + 2 /* bar offset */ : 0);
+			int iconY = location.getY() + (i >= 2 ? IMAGE_SIZE /* pad */ : 0);
+			if (i >= 4) iconY = location.getY() + IMAGE_SIZE * 2;
+			System.out.println(runeId + " " + iconX + " " + iconY);
 
 			BufferedImage image = getRuneImage(runeId);
 			if (image != null)

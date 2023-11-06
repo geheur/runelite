@@ -81,6 +81,8 @@ public class HotColdClue extends ClueScroll implements LocationClueScroll, Locat
 
 	public static HotColdClue forText(String text)
 	{
+//		MASTER_CLUE.reset();
+		if (true) return MASTER_CLUE;
 		if (BEGINNER_CLUE.text.equalsIgnoreCase(text))
 		{
 			BEGINNER_CLUE.reset();

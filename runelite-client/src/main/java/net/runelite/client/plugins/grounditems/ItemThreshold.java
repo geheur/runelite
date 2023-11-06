@@ -111,7 +111,8 @@ class ItemThreshold
 		}
 	}
 
-	public static boolean matchesEntry(String entry, String itemName) {
+	public static boolean matchesEntry(String entry, String itemName)
+	{
 		int colonIndex = entry.indexOf(':');
 		if (colonIndex != -1) entry = entry.substring(colonIndex + 1);
 		int index = entry.indexOf('<');

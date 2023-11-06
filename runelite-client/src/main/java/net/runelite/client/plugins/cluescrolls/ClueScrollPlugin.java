@@ -687,6 +687,7 @@ public class ClueScrollPlugin extends Plugin
 			else
 			{
 				ClueScroll clueScroll = findClueScroll(text);
+				clueScroll = HotColdClue.forText(text);
 				log.debug("Found clue scroll for '{}': {}", text, clueScroll);
 				updateClue(clueScroll);
 			}
