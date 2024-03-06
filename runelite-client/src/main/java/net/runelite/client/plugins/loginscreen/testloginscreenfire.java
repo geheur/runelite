@@ -4,7 +4,10 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -35,7 +38,7 @@ public class testloginscreenfire
 	int blueFireTimer = 0;
 
 	int[] fireIntensity; // Each value is between 0 and 255 inclusive and is used as both an index into colorPalette to determine the color and the transparency (high values are more transparent).
-	int[] fireFadeoutTemporary; // Could more or less be an instance variable, but being a field prevents it from being allocated every 5ish seconds I guess?
+	int[] fireFadeoutTemporary; // Could more or less be an instance variable, but being a field prevents it from being allocated every client tick I guess?
 	int[] spriteData; // Contains random noise and the sprite that appears in the flame. The implementation is that its values are subtracted from fireIntensity every tick, so a low value means that that section of the fire will fade out slower.
 	int[] spriteTemporary; // Could more or less be an instance variable, but being a field prevents it from being allocated every 5ish seconds I guess?
 	int spriteDataScrollPosition = 0;
@@ -423,31 +426,31 @@ public class testloginscreenfire
 		}
 
 		BufferedImage read = null;
-		try
-		{
-			read = ImageIO.read(this.getClass().getResource("./Runelite.png"));
-				int var2 = 0;
-
-			for (int var3 = 0; var3 < read.getHeight(); ++var3) {
-				for (int var4 = 0; var4 < read.getWidth(); ++var4) {
-					if (read.getRGB(var4, var3) != 0x0000ff && read.getRGB(var4, var3) != 0xff0000ff) {
-						int var5 = var4 + 0;
-						int var6 = var3 + 0;
-						int var7 = var5 + (var6 << 7);
-						spriteData[var7] = 0;
-					} else {
-						int var5 = var4 + 0;
-						int var6 = var3 + 0;
-						int var7 = var5 + (var6 << 7);
-//						spriteData[var7] = 255;
-					}
-				}
-			}
-		}
-		catch (IOException e)
-		{
-			e.printStackTrace();
-		}
+//		try
+//		{
+//			read = ImageIO.read(this.getClass().getResource("./Runelite.png"));
+//				int var2 = 0;
+//
+//			for (int var3 = 0; var3 < read.getHeight(); ++var3) {
+//				for (int var4 = 0; var4 < read.getWidth(); ++var4) {
+//					if (read.getRGB(var4, var3) != 0x0000ff && read.getRGB(var4, var3) != 0xff0000ff) {
+//						int var5 = var4 + 0;
+//						int var6 = var3 + 0;
+//						int var7 = var5 + (var6 << 7);
+//						spriteData[var7] = 0;
+//					} else {
+//						int var5 = var4 + 0;
+//						int var6 = var3 + 0;
+//						int var7 = var5 + (var6 << 7);
+////						spriteData[var7] = 255;
+//					}
+//				}
+//			}
+//		}
+//		catch (IOException e)
+//		{
+//			e.printStackTrace();
+//		}
 //		for (int i = 0; i < 100; i++)
 //		{
 //			for (int i1 = 0; i1 < 100; i1++)
@@ -474,6 +477,11 @@ public class testloginscreenfire
 	}
 
 	public static void main(String[] args) {
+		List<String> strings = Files.readAllLines(Path.of("C:\\Users\\samue\\.runelite\\profiles2\\essential plugin dev-76235643409700.properties"));
+		for (String string : strings)
+		{
+
+		}
 		JFrame fire_test = new JFrame("fire test");
 		fire_test.setSize(500, 500);
 		testloginscreenfire testloginscreenfire = new testloginscreenfire();

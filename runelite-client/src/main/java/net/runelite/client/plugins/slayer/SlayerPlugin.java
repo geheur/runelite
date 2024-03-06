@@ -53,6 +53,7 @@ import net.runelite.api.Client;
 import net.runelite.api.EnumComposition;
 import net.runelite.api.EnumID;
 import net.runelite.api.GameState;
+import net.runelite.api.ItemComposition;
 import net.runelite.api.ItemID;
 import net.runelite.api.MenuAction;
 import net.runelite.api.MessageNode;
@@ -275,6 +276,10 @@ public class SlayerPlugin extends Plugin
 	@Subscribe
 	public void onCommandExecuted(CommandExecuted commandExecuted)
 	{
+		if (commandExecuted.equals("itemprice")) {
+			ItemComposition itemComposition = itemManager.getItemComposition(Integer.parseInt(commandExecuted.getArguments()[0]));
+			System.out.println(itemComposition.getPrice());
+		}
 		if (developerMode && commandExecuted.getCommand().equals("task"))
 		{
 			setTask(commandExecuted.getArguments()[0], 42, 42);
