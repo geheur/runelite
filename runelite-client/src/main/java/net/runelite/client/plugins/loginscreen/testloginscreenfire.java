@@ -399,6 +399,7 @@ public class testloginscreenfire
 
 	}
 
+	int spriteIndex = 0;
 	final void generateFirePattern(/*IndexedSprite var1*/) {
 		Arrays.fill(spriteData, 0);
 //		for (int i = 0; i < spriteData.length; ++i) {
@@ -433,16 +434,14 @@ public class testloginscreenfire
 //
 //			for (int var3 = 0; var3 < read.getHeight(); ++var3) {
 //				for (int var4 = 0; var4 < read.getWidth(); ++var4) {
-//					if (read.getRGB(var4, var3) != 0x0000ff && read.getRGB(var4, var3) != 0xff0000ff) {
-//						int var5 = var4 + 0;
-//						int var6 = var3 + 0;
-//						int var7 = var5 + (var6 << 7);
+//					int rgb = read.getRGB(var4, var3) & 0xffffff;
+//					int var5 = var4 + 0;
+//					int var6 = var3 + 0;
+//					int var7 = var5 + (var6 << 7);
+//					if (rgb == 0x0000ff) {
 //						spriteData[var7] = 0;
-//					} else {
-//						int var5 = var4 + 0;
-//						int var6 = var3 + 0;
-//						int var7 = var5 + (var6 << 7);
-////						spriteData[var7] = 255;
+//					} else if (rgb == 0xff0000) {
+//						spriteData[var7] = 255;
 //					}
 //				}
 //			}
@@ -459,24 +458,35 @@ public class testloginscreenfire
 //			}
 //		}
 
-		if (false/*var1 != null*/) {
-			int var2 = 0;
+		if (true/*var1 != null*/) {
+			try {
+				read = ImageIO.read(this.getClass().getResource("./501-" + (spriteIndex++ % 12) + ".png"));
+				System.out.println("in here " + spriteIndex + " " + read.getHeight() + " " + read.getWidth());
+				int var2 = 0;
 
-//			for (var3 = 0; var3 < var1.subHeight; ++var3) {
-//				for (var4 = 0; var4 < var1.subWidth; ++var4) {
-//					if (var1.pixels[var2++] != 0) {
-//						var5 = var4 + var1.xOffset + 16;
-//						int var6 = var3 + var1.yOffset + 16;
-//						int var7 = var5 + (var6 << 7);
-//						spriteData[var7] = 0;
-//					}
-//				}
-//			}
+				for (int var3 = 0; var3 < read.getHeight(); ++var3) {
+					for (int var4 = 0; var4 < read.getWidth(); ++var4) {
+//						System.out.println("x " + var3 + " y " + var4 + " " + read.getRGB(var4, var3));
+						var2++;
+						if (read.getRGB(var4, var3) != 0) {
+							int var5 = var4 + 16;
+							int var6 = var3 + 16;
+							int var7 = var5 + (var6 << 7);
+							spriteData[var7] = 0;
+						}
+					}
+				}
+			}
+			catch (IOException e)
+			{
+				e.printStackTrace();
+			}
 		}
 
 	}
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException
+	{
 		List<String> strings = Files.readAllLines(Path.of("C:\\Users\\samue\\.runelite\\profiles2\\essential plugin dev-76235643409700.properties"));
 		for (String string : strings)
 		{
