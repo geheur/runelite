@@ -123,8 +123,12 @@ public class SpellbookPlugin extends Plugin
 	@Override
 	protected void shutDown()
 	{
-		clearReoderMenus();
-		clientThread.invokeLater(this::reinitializeSpellbook);
+		clientThread.invokeLater(() ->
+		{
+			reordering(false);
+			clearReoderMenus();
+			reinitializeSpellbook();
+		});
 	}
 
 	@Subscribe
